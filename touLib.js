@@ -93,37 +93,11 @@ const TOU = {
       await this.readErrorTou(value, done, 0x81);
 
       this.deviceAddress = Array.from([value[5], value[6], value[7]]);
-      const serial = this.reverseAddress(3, this.deviceAddress);
+      const serial = this.bytesToInt(this.deviceAddress);
 
       return {
-        serialNumber: serial,
         packetResponse: value,
-      };
-    } catch (error) {
-      console.error("Ошибка чтения:", error);
-      throw error;
-    }
-  },
-
-  recordSerialNumber: async function () {
-    try {
-      if (!port) {
-        console.log("Не подключен порт");
-        throw new Error("Отстутствие подключенного порта");
-      }
-
-      const packet = this.makePacket(0x02, [0x62, 0x1e, 0x00]);
-      await writer.write(new Uint8Array(packet));
-      const { value, done } = await reader.read();
-
-      await this.readErrorTou(value, done, 0x82);
-
-      this.deviceAddress = Array.from([value[0], value[1], value[2]]);
-      const serial = this.reverseAddress(3, this.deviceAddress);
-
-      return {
         serialNumber: serial,
-        packetResponse: value,
       };
     } catch (error) {
       console.error("Ошибка чтения:", error);
@@ -137,7 +111,7 @@ const TOU = {
         console.log("Не подключен порт");
         throw new Error("Отстутствие подключенного порта");
       }
-      
+
       const packet = this.makePacket(0x03);
       await writer.write(new Uint8Array(packet));
       const { value, done } = await reader.read();
@@ -158,7 +132,89 @@ const TOU = {
     }
   },
 
-  readErrorTou: async function(value, done, errCop) {
+  readOperTime: async function () {
+    try {
+      if (!port) {
+        console.log("Не подключен порт");
+        throw new Error("Отстутствие подключенного порта");
+      }
+
+      const packet = this.makePacket(0x04);
+      await writer.write(new Uint8Array(packet));
+      const { value, done } = await reader.read();
+
+      await this.readErrorTou(value, done, 0x84);
+
+      return {
+        packetResponse: value,
+        operTime: Array.from([value[5], value[6], value[7], value[8]]),
+      };
+    } catch (error) {
+      console.error("Ошибка чтения:", error);
+      throw error;
+    }
+  },
+
+  setTime: async function (year, month, day, hour, minute, second, timezone) {
+    try {
+      if (!port) {
+        console.log("Не подключен порт");
+        throw new Error("Отстутствие подключенного порта");
+      }
+
+      const timeData = [year - 2000, month, day, hour, minute, second];
+
+      let tzValue = timezone;
+      if (tzValue < 0) {
+        tzValue = 65536 + tzValue; // для отрицательных значений
+      }
+
+      const tzBytes = [tzValue & 0xff, (tzValue >> 8) & 0xff];
+
+      const data = [...timeData, ...tzBytes];
+      const packet = this.makePacket(0x05, data);
+
+      await writer.write(new Uint8Array(packet));
+      const { value, done } = await reader.read();
+
+      await this.readErrorTou(value, done, 0x85);
+
+      return value;
+    } catch (error) {
+      console.error("Ошибка чтения:", error);
+      throw error;
+    }
+  },
+
+  readTime: async function () {
+    try {
+      if (!port) {
+        console.log("Не подключен порт");
+        throw new Error("Отстутствие подключенного порта");
+      }
+
+      const packet = this.makePacket(0x06);
+      await writer.write(new Uint8Array(packet));
+      const { value, done } = await reader.read();
+
+      await this.readErrorTou(value, done, 0x86);
+
+      return {
+        packetResponse: value,
+        yearTime: value[5],
+        monthTime: value[6],
+        dayTime: value[7],
+        hourTime: value[8],
+        minuteTime: value[9],
+        secTime: value[10],
+      };
+    } catch (error) {
+      console.error("Ошибка чтения:", error);
+      throw error;
+    }
+  },
+
+  readErrorTou: async function (value, done, errCop) {
     if (done) {
       console.log("Поток чтения закрыт устройством");
       await TOU.closeTou();
@@ -207,12 +263,34 @@ const TOU = {
     return packet;
   },
 
-  reverseAddress: function (numBytes, address) {
+  bytesToInt: function (address) {
     let result = 0;
-    for (let i = 0; i < numBytes; i++) {
+    for (let i = 0; i < address.length; i++) {
       result |= address[i] << (i * 8);
     }
     return result;
+  },
+
+  formatOperTime: function (operTime) {
+    const numOperTime = this.bytesToInt(operTime);
+
+    return {
+      dayOperTime: Math.floor(numOperTime / 86400),
+      hourOperTime: Math.floor((numOperTime % 86400) / 3600),
+      minuteOperTime: Math.floor((numOperTime % 3600) / 60),
+      secOperTime: numOperTime % 60,
+    };
+  },
+
+  formatTime: function (timeTOU) {
+    const numTime = this.bytesToInt(timeTOU);
+
+    return {
+      dayOperTime: Math.floor(numOperTime / 86400),
+      hourOperTime: Math.floor((numOperTime % 86400) / 3600),
+      minuteOperTime: Math.floor((numOperTime % 3600) / 60),
+      secOperTime: numOperTime % 60,
+    };
   },
 
   getErrorMessage: function (errorCode) {
