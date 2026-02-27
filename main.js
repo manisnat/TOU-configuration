@@ -1,8 +1,5 @@
+const tou = new TouController(TouProtocol);
 const output = document.getElementById("output");
-
-function disabledBtn(idBtn, turnOff) {
-  document.getElementById(idBtn).disabled = turnOff;
-}
 
 function log(text) {
   output.innerHTML += text + "\n";
@@ -12,34 +9,48 @@ function toStringPadStart(num, count, data = "0") {
   return num.toString().padStart(count, data);
 }
 
+function logAddress() {
+  log(
+    `Серийный номер: ${toStringPadStart(TouProtocol.bytesToInt(tou.getDeviceAddress()), 6)}`,
+  );
+}
+
 document
   .getElementById("connectBtn")
   .addEventListener("click", async function () {
-    const result = await TOU.connectPort();
-    log(result);
-    await TOU.readSerialNumber();
+    try {
+      const result = await tou.connect();
+      log(result);
+
+      const dataSerial = await tou.readSerialNumber();
+      log(`Серийный номер: ${toStringPadStart(dataSerial.serialNumber, 6)}`);
+    } catch (error) {
+      log("Ошибка: " + error.message);
+    }
   });
 
 document
   .getElementById("disconnectBtn")
   .addEventListener("click", async function () {
-    const result = await TOU.disconnectPort();
-    log(result);
+    try {
+      const result = await tou.disconnect();
+      log(result);
+    } catch (error) {
+      log("Ошибка: " + error.message);
+    }
   });
-
+ 
 document
   .getElementById("readSerialBtn")
   .addEventListener("click", async function readSerialFunc() {
     try {
-      const { packetResponse, serialNumber } = await TOU.readSerialNumber();
+      const dataSerial = await tou.readSerialNumber();
 
-      const bytes = Array.from(packetResponse);
-      log(`Ответ пакетом: ${TOU.formatPacket(bytes)}`);
+      const bytes = Array.from(dataSerial.rawResponse);
+      log(`Ответ пакетом: ${TouProtocol.formatPacket(bytes)}`);
 
-      log(
-        `Серийный номер hex (LSB - MSB): ${TOU.formatPacket(TOU.deviceAddress)}`,
-      );
-      log(`Серийный номер: ${toStringPadStart(serialNumber, 6)}`);
+      log(`Серийный номер hex: ${TouProtocol.formatPacket(dataSerial.deviceAddress)}`);
+      log(`Серийный номер: ${toStringPadStart(dataSerial.serialNumber, 6)}`);
     } catch (error) {
       log("Не удалось прочитать: " + error.message);
     }
@@ -47,70 +58,60 @@ document
 
 document
   .getElementById("readDeviceTypeBtn")
-  .addEventListener("click", async function () {
+  .addEventListener("click", async function readDeviceTypeFunc() {
     try {
-      const { packetResponse, 
-        deviceType,
-        buildMainSoftware,
-        versionMainSoftware,
-        buildAddSoftware,
-        versionAddSoftware
-      } = await TOU.readDeviceType();
+      const dataDevice = await tou.readDeviceType();
 
-      const bytes = Array.from(packetResponse);
-      log(`Ответ пакетом: ${TOU.formatPacket(bytes)}`);
+      const bytes = Array.from(dataDevice.rawResponse);
+      log(`Ответ пакетом: ${TouProtocol.formatPacket(bytes)}`);
 
-      log(`Тип устройства: ${deviceType.join(".")}`);
-      log(`Основной ПО: ${buildMainSoftware}.${versionMainSoftware}`);
-      log(`Дополнительный ПО: ${buildAddSoftware}.${versionAddSoftware}`);
-      log(`Серийный номер: ${toStringPadStart(TOU.bytesToInt(TOU.deviceAddress), 6)}`);
+      log(`Тип устройства: ${dataDevice.deviceType.join(".")}`);
+      log(
+        `Основной ПО: ${dataDevice.buildMainSoftware}.${dataDevice.versionMainSoftware}`,
+      );
+      log(
+        `Дополнительный ПО: ${dataDevice.buildAddSoftware}.${dataDevice.versionAddSoftware}`,
+      );
+
+      logAddress();
     } catch (error) {
       log("Не удалось прочитать: " + error.message);
     }
   });
 
-document.getElementById("readOperTimeBtn").addEventListener("click", async function () {
-  try {
-    const { packetResponse, operTime } = await TOU.readOperTime();
+document
+  .getElementById("readOperTimeBtn")
+  .addEventListener("click", async function readOperTimeFunc() {
+    try {
+      const dataOperTime = await tou.readOperTime();
 
-    const bytes = Array.from(packetResponse);
-    log(`Ответ пакетом: ${TOU.formatPacket(bytes)}`);
+      const bytes = Array.from(dataOperTime.rawResponse);
+      log(`Ответ пакетом: ${TouProtocol.formatPacket(bytes)}`);
 
-    const { dayOperTime, hourOperTime, minuteOperTime, secOperTime } =
-      TOU.formatOperTime(operTime);
-    log(`Время наработки: ${TOU.bytesToInt(operTime)} секунд`);
-    log(
-      `Время наработки: ${dayOperTime} дней ${hourOperTime} часов ${minuteOperTime} минут ${secOperTime} секунд `,
-    );
-    log( 
-      `Серийный номер: ${toStringPadStart(TOU.bytesToInt(TOU.deviceAddress), 6)}`,
-    );
-  } catch (error) {
-    log("Не удалось прочитать: " + error.message);
-  }
+      const { dayOperTime, hourOperTime, minuteOperTime, secOperTime } =
+        TouProtocol.formatOperTime(dataOperTime.operTime);
+      log(`Время наработки: ${TouProtocol.bytesToInt(dataOperTime.operTime)} секунд`);
+      log(
+        `Время наработки: ${dayOperTime} дней ${hourOperTime} часов ${minuteOperTime} минут ${secOperTime} секунд `,
+      );
+      logAddress();
+    } catch (error) {
+      log("Не удалось прочитать: " + error.message);
+    }
   });
 
 document
   .getElementById("readTimeBtn")
-  .addEventListener("click", async function () {
+  .addEventListener("click", async function readTimeFunc() {
     try {
-      const { 
-        packetResponse, 
-        yearTime,
-        monthTime,
-        dayTime,
-        hourTime,
-        minuteTime,
-        secTime } = await TOU.readTime();
+      const dataTime = await tou.readTime();
 
-      const bytes = Array.from(packetResponse);
-      log(`Ответ пакетом: ${TOU.formatPacket(bytes)}`);
+      const bytes = Array.from(dataTime.rawResponse);
+      log(`Ответ пакетом: ${TouProtocol.formatPacket(bytes)}`);
       log(
-        `Время в ТОУ: ${toStringPadStart(yearTime, 4, "2000")}.${toStringPadStart(monthTime, 2)}.${toStringPadStart(dayTime, 2)} ${toStringPadStart(hourTime, 2)}:${toStringPadStart(minuteTime, 2)}:${toStringPadStart(secTime, 2)}`,
+        `Время в ТОУ: ${toStringPadStart(dataTime.yearTime, 4, "2000")}.${toStringPadStart(dataTime.monthTime, 2)}.${toStringPadStart(dataTime.dayTime, 2)} ${toStringPadStart(dataTime.hourTime, 2)}:${toStringPadStart(dataTime.minuteTime, 2)}:${toStringPadStart(dataTime.secTime, 2)}`,
       );
-      log(
-        `Серийный номер: ${toStringPadStart(TOU.bytesToInt(TOU.deviceAddress), 6)}`,
-      );
+      logAddress();
     } catch (error) {
       log("Не удалось прочитать: " + error.message);
     }
@@ -118,34 +119,13 @@ document
 
 document
   .getElementById("setTimeBtn")
-  .addEventListener("click", async function () {
+  .addEventListener("click", async function setTimeFunc() {
     try {
-      // Простой диалог ввода
-      const dateStr = prompt(
-        "Введите дату и время (ГГГГ-ММ-ДД ЧЧ:ММ:СС)",
-        "2026-02-26 12:35:08",
-      );
-      if (!dateStr) return;
+      const [year, month, day, hour, minute, second, timezone] = [
+        2026, 2, 25, 10, 10, 23, 700,
+      ];
 
-      const tzStr = prompt(
-        "Введите часовой пояс (ЧЧММ, например 300 для +3:00, -500 для -5:00)",
-        "700",
-      );
-      if (!tzStr) return;
-
-      
-      const [datePart, timePart] = dateStr.split(" ");
-      const [year, month, day] = datePart.split("-").map(Number);
-      const [hour, minute, second] = timePart.split(":").map(Number);
-
-      
-      const timezone = parseInt(tzStr);
-
-      log(
-        `📅 Устанавливаем: ${year}.${month}.${day} ${hour}:${minute}:${second} (UTC ${timezone})`,
-      );
-
-      const packetResponse = await TOU.setTime(
+      const rawResponse = await tou.setTime(
         year,
         month,
         day,
@@ -155,27 +135,14 @@ document
         timezone,
       );
 
-      //const packetResponse = await TOU.setTime(2026, 2, 25, 10, 10, 23, -800);
-
-      const bytes = Array.from(packetResponse);
-      log(`Ответ пакетом: ${TOU.formatPacket(bytes)}`);
-      log(
-        `Серийный номер: ${toStringPadStart(TOU.bytesToInt(TOU.deviceAddress), 6)}`,
-      );
+      const bytes = Array.from(rawResponse);
+      log(`Ответ пакетом: ${TouProtocol.formatPacket(bytes)}`);
+      logAddress();
     } catch (error) {
       log("Не удалось прочитать: " + error.message);
     }
   });
 
-  // 1. Получить элемент
-const dateInput = document.getElementById('datePicker');
-
-// 3. Получить выбранную дату
-dateInput.addEventListener('change', (event) => {
-    console.log("Выбранная дата:", event.target.value); // Формат YYYY-MM-DD
-});
-
-  
 
 if (!navigator.serial) {
   log("Web Serial API не поддерживается! Используйте Chrome/Edge");
