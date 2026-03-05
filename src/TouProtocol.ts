@@ -1,4 +1,30 @@
-const TouProtocol = {
+import type { 
+  DeviceAddress,
+  RawResponse,
+  SerialNumberData,
+  DeviceTypeData,
+  OperTimeData,
+  FormattedOperTime,
+  TimeData,
+  ErrorMessages
+} from "./types";
+
+interface TouProtocolType {
+  errors: ErrorMessages;
+  getErrorMessage(errorCode: number): string;
+  calculateCRC(data: number[]): number;
+  makePacket(deviceAddress: DeviceAddress, command: number, data: number[]): number[];
+  checkResponseError(response: RawResponse, expectedCommand: number): boolean;
+  formatPacket(packet: RawResponse): string;
+  bytesToInt(bytes: number[]): number;
+  parseSerialNumber(response: RawResponse): SerialNumberData;
+  parseDeviceType(response: RawResponse): DeviceTypeData;
+  parseOperTime(response: RawResponse): OperTimeData;
+  formatOperTime(operTime: number[]): FormattedOperTime;
+  parseTime(response: RawResponse): TimeData;
+}
+
+export const TouProtocol: TouProtocolType = {
   errors: {
     1: "Неизвестная функция (не поддерживается)",
     2: "Неверная длина запроса",
@@ -13,12 +39,12 @@ const TouProtocol = {
     11: "Ответ от КДТН: Неверные данные в запросе",
   },
 
-  getErrorMessage: function (errorCode) {
+  getErrorMessage(errorCode: number): string {
     return this.errors[errorCode] || `Неизвестная ошибка (код: ${errorCode})`;
   },
 
-  calculateCRC: function (data) {
-    let crc = 0xffff;
+  calculateCRC(data: number[]): number {
+    let crc: number = 0xffff;
     for (let i = 0; i < data.length; i++) {
       crc ^= data[i];
       for (let j = 0; j < 8; j++) {
@@ -32,20 +58,18 @@ const TouProtocol = {
     return crc;
   },
 
-  makePacket: function (deviceAddress, command, data = []) {
-    if (command === 0x01) {
-      deviceAddress = [0x00, 0x00, 0x00];
-    }
+  makePacket(deviceAddress: DeviceAddress, command: number, data: number[] = []): number[] {
+    const addr = command === 0x01 ? [0x00, 0x00, 0x00] as DeviceAddress : deviceAddress;
 
-    const packet = [...deviceAddress, command, data.length + 2, ...data];
-    const crc = this.calculateCRC(packet);
+    const packet: number[] = [...addr, command, data.length + 2, ...data];
+    const crc: number = this.calculateCRC(packet);
     packet.push(crc & 0xff);
     packet.push((crc >> 8) & 0xff);
 
     return packet;
   },
 
-  checkResponseError: function (response, expectedCommand) {
+  checkResponseError(response: RawResponse, expectedCommand: number): boolean {
     if (!response || response.length === 0) {
       throw new Error("Получен пустой ответ");
     }
@@ -59,15 +83,15 @@ const TouProtocol = {
     return true;
   },
 
-  formatPacket: function (packet) {
-    return packet
+  formatPacket(packet: RawResponse): string {
+    return Array.from(packet)
       .map((b) => "0x" + b.toString(16).toUpperCase().padStart(2, "0"))
       .join(" ");
   },
 
   // Преобразование массива байт в число (little-endian)
-  bytesToInt: function (bytes) {
-    let result = 0;
+  bytesToInt(bytes: number[]): number {
+    let result: number = 0;
     for (let i = 0; i < bytes.length; i++) {
       result |= bytes[i] << (i * 8);
     }
@@ -75,41 +99,44 @@ const TouProtocol = {
   },
 
   // Парсинг серийного номера из ответа
-  parseSerialNumber: function (response) {
-    const deviceAddress = [response[5], response[6], response[7]];
+  parseSerialNumber(response: RawResponse): SerialNumberData {
+    const arr = Array.from(response);
+    const deviceAddress: DeviceAddress = [arr[5], arr[6], arr[7]];
     const serialNumber = this.bytesToInt(deviceAddress);
 
     return {
       deviceAddress: deviceAddress,
       serialNumber: serialNumber,
-      rawResponse: response,
+      rawResponse: arr,
     };
   },
 
-  parseDeviceType: function (response) {
-    const deviceType = [response[5], response[6], response[7]];
+  parseDeviceType(response: RawResponse): DeviceTypeData {
+    const arr = Array.from(response);
+    const deviceType: [number, number, number] = [arr[5], arr[6], arr[7]];
 
     return {
       deviceType: deviceType,
-      buildMainSoftware: response[8],
-      versionMainSoftware: response[9],
-      buildAddSoftware: response[10],
-      versionAddSoftware: response[11],
-      rawResponse: response,
+      buildMainSoftware: arr[8],
+      versionMainSoftware: arr[9],
+      buildAddSoftware: arr[10],
+      versionAddSoftware: arr[11],
+      rawResponse: arr,
     };
   },
 
-  parseOperTime: function (response) {
-    const operTime = [response[5], response[6], response[7], response[8]];
-
+  parseOperTime(response: RawResponse): OperTimeData {
+    const arr = Array.from(response);
+    const operTime: [number, number, number, number] = [arr[5], arr[6], arr[7], arr[8]];
+    
     return {
       operTime: operTime,
       rawResponse: response,
     };
   },
 
-  formatOperTime: function (operTime) {
-    const numOperTime = this.bytesToInt(operTime);
+  formatOperTime(operTime: number[]): FormattedOperTime {
+    const numOperTime: number = this.bytesToInt(operTime);
 
     return {
       dayOperTime: Math.floor(numOperTime / 86400),
@@ -119,16 +146,16 @@ const TouProtocol = {
     };
   },
 
-  parseTime: function (response) {
+  parseTime(response: RawResponse): TimeData {
+    const arr = Array.from(response);
     return {
-      yearTime: response[5],
-      monthTime: response[6],
-      dayTime: response[7],
-      hourTime: response[8],
-      minuteTime: response[9],
-      secTime: response[10],
-      rawResponse: response,
+      yearTime: arr[5],
+      monthTime: arr[6],
+      dayTime: arr[7],
+      hourTime: arr[8],
+      minuteTime: arr[9],
+      secTime: arr[10],
+      rawResponse: arr,
     };
   },
-
 };

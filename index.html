@@ -1,26 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>ТОУ-ПК</title>
-    <script src="touLib.js"></script>
-</head>
-<body>
-    <h1>🔌 ТОУ-ПК</h1>
-    
-    <button id="connectBtn">🔗 Подключиться</button>
-    <button id="disconnectBtn">❌ Отключиться</button>
-    
-    <button id="readSerialBtn">📋 Серийный номер</button>
-    <button id="readDeviceTypeBtn">📋 Тип устройства</button>
-    <button id="readOperTimeBtn">⏱️ Время наработки</button>
-    <button id="readTimeBtn">⏱️ Время в тоу</button>
-    <button id="setTimeBtn">⏱️ Установка времени в тоу</button>
-
-    
-    <div id="output" style="background:#2d2d2d; color:#f8f8f2; padding:15px; margin-top:20px; font-family:monospace; white-space:pre-wrap;"></div>
-
-    <script src="TouProtocol.js"></script>
-    <script src="TouController.js"></script>
-    <script src="main.js"></script>
-</body>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tou_git</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

@@ -1,18 +1,44 @@
-class TouController {
-  constructor(protocol) {
+import { TouProtocol} from './TouProtocol';
+import type {
+  DeviceAddress, 
+  SerialNumberData, 
+  DeviceTypeData, 
+  OperTimeData, 
+  TimeData
+} from './types';
+
+interface SerialPort {
+  readable: ReadableStream;
+  writable: WritableStream;
+  open(opttions: {baudRate: number, dataBits: number, stopBits: number, parity: string}): Promise<void>;
+  close(): Promise<void>;
+}
+
+declare global {
+  interface Navigator {
+    serial: {
+      requestPort(): Promise<SerialPort>;
+    };
+  }
+}
+
+export class TouController {
+  private protocol: typeof TouProtocol;
+  private port: SerialPort | null = null;
+  private reader: ReadableStreamDefaultReader | null = null;
+  private writer: WritableStreamDefaultWriter | null = null;
+  private deviceAddress: DeviceAddress = [0x00, 0x00, 0x00];
+  private isConnected: boolean = false;
+
+  constructor(protocol: typeof TouProtocol) {
     this.protocol = protocol;
-    this.port = null;
-    this.reader = null;
-    this.writer = null;
-    this.deviceAddress = [0x00, 0x00, 0x00];
-    this.isConnected = false;
   }
 
-  getDeviceAddress() {
+  public getDeviceAddress(): DeviceAddress {
     return this.deviceAddress;
   }
 
-  async connect() {
+  public async connect(): Promise<string> {
     try {
       if (this.isConnected) {
         return "Порт уже подключен";
@@ -33,11 +59,11 @@ class TouController {
       return "Подключились к порту";
     } catch (err) {
       await this.disconnect();
-      throw new Error("Ошибка подключения: " + err.message);
+      throw new Error("Ошибка подключения: " + (err as Error).message);
     }
   }
 
-  async disconnect() {
+  public async disconnect(): Promise<string> {
     try {
       if (!this.isConnected) {
         return "Вы не были подключены к порту";
@@ -80,13 +106,13 @@ class TouController {
       this.isConnected = false;
       return "Отключились от порта";
     } catch (err) {
-      throw new Error("Ошибка отключения: " + err.message);
+      throw new Error("Ошибка отключения: " + (err as Error).message);
     }
   }
 
-  async sendCommand(command, data = []) {
-    if (!this.isConnected) {
-      throw new Error("Отсутствие подключенного порта");
+  private async sendCommand(command: number, data: number[] = []): Promise<Uint8Array> {
+    if (!this.isConnected || !this.writer || !this.reader) {
+      throw new Error("Нет подключения к устройству");
     }
 
     const packet = this.protocol.makePacket(
@@ -108,44 +134,52 @@ class TouController {
     return value;
   }
 
-  async readSerialNumber() {
+  public async readSerialNumber(): Promise<SerialNumberData> {
     const response = await this.sendCommand(0x01);
     const parsed = this.protocol.parseSerialNumber(response);
 
-    this.deviceAddress = parsed.deviceAddress;
+    this.deviceAddress = parsed.deviceAddress as DeviceAddress;
 
     return parsed;
   }
 
-  async readDeviceType() {
+  public async readDeviceType(): Promise<DeviceTypeData> {
     const response = await this.sendCommand(0x03);
     const parsed = this.protocol.parseDeviceType(response);
 
     return parsed;
   }
 
-  async readOperTime() {
+  public async readOperTime(): Promise<OperTimeData> {
     const response = await this.sendCommand(0x4);
     const parsed = this.protocol.parseOperTime(response);
 
     return parsed;
   }
 
-  async setTime(year, month, day, hour, minute, second, timezone) {
+  public async setTime(
+    year: number, 
+    month: number, 
+    day: number, 
+    hour: number, 
+    minute: number, 
+    second: number, 
+    timezone: number
+  ): Promise<Uint8Array> {
     let tzValue = timezone;
     if (tzValue < 0) {
       tzValue = 65536 + tzValue; // для отрицательных значений
     }
 
     const tzBytes = [tzValue & 0xff, (tzValue >> 8) & 0xff];
-    const data = [year - 2000, month, day, hour, minute, second, ...tzBytes];
+    const data: number[] = [year - 2000, month, day, hour, minute, second, ...tzBytes];
 
     const response = await this.sendCommand(0x5, data);
 
     return response;
   }
 
-  async readTime() {
+  public async readTime(): Promise<TimeData> {
     const response = await this.sendCommand(0x6);
     const parsed = this.protocol.parseTime(response);
 
