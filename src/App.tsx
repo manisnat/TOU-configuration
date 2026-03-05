@@ -136,16 +136,16 @@ function App() {
 
   return (
     <div className="app">
-      <h1>🔌 ТОУ-ПК</h1>
+      <h1>Конфигуратор ТОУ</h1>
 
       <div className="buttons">
-        <button onClick={connectFunc}>🔗 Подключиться</button>
-        <button onClick={disconnectFunc}>❌ Отключиться</button>
-        <button onClick={readSerialFunc}>📋 Серийный номер</button>
-        <button onClick={readDeviceTypeFunc}>📋 Тип устройства</button>
-        <button onClick={readOperTimeFunc}>⏱️ Время наработки</button>
-        <button onClick={readTimeFunc}>⏱️ Время в тоу</button>
-        <button onClick={setTimeFunc}>⏱️ Установка времени</button>
+        <button onClick={connectFunc}>Подключиться</button>
+        <button onClick={disconnectFunc}>Отключиться</button>
+        <button onClick={readSerialFunc}>Серийный номер</button>
+        <button onClick={readDeviceTypeFunc}>Тип устройства</button>
+        <button onClick={readOperTimeFunc}>Время наработки</button>
+        <button onClick={readTimeFunc}>Время в тоу</button>
+        <button onClick={setTimeFunc}>Установка времени</button>
       </div>
 
       <div className="output">
