@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { DataListRoot, DataListItem } from "./components/ui/data-list";
+import { DataList } from "@chakra-ui/react";
+import { InfoTip } from "./components/ui/toggle-tip";
 import { TouController } from "./TouController";
 import { TouProtocol } from "./TouProtocol";
 import "./App.css";
@@ -132,6 +134,16 @@ function App() {
     }
   }, []);
 
+  const stats = [
+    { label: "Серийный номер", value: `${serialNumber || "—"}`, helpText: "Уникальный идентификатор устройства" },
+    { label: "Тип устройства", value: `${deviceType || "—"}`, helpText: "Код модели" },
+    { label: "Версия ПО", value: `${mainSoftware || "—"} `, helpText: "Основное ПО" },
+    { label: "Дополнительное ПО", value: `${additionalSoftware || "—"}`, helpText: "Дополнительное ПО"},
+    { label: "Время наработки", value: `${operTime || "—"}`, helpText: "С момента запуска" },
+    { label: "Текущее время", value: `${currentTime || "—"}`, helpText: "Время в устройстве" },
+  ]
+
+
   return (
     <div className="app">
       <h1>Конфигуратор ТОУ</h1>
@@ -142,44 +154,20 @@ function App() {
         <button onClick={setTimeFunc}>Настроить время</button>
       </div>
 
-      <DataListRoot className="data-list">
-        <DataListItem 
-          label="Серийный номер"
-          value={serialNumber || "—"}
-          info="Уникальный идентификатор устройства"
-        />
+      <DataList.Root className="data-list" size='lg'>
+        {stats.map((item) => (
+          <DataList.Item key={item.label}>
+            <DataList.ItemLabel>
+              {item.label}
+              <InfoTip>{item.helpText}</InfoTip>
+            </DataList.ItemLabel>
+            <DataList.ItemValue>{item.value}</DataList.ItemValue>
+          </DataList.Item>
+        ))}
+      </DataList.Root>
 
-        <DataListItem 
-          label="Тип устройства" 
-          value={deviceType || "—"} 
-          info="Код модели"
-        />
-
-        <DataListItem 
-          label="Версия ПО" 
-          value={mainSoftware || "—"} 
-          info="Основное ПО"
-        />
-
-        <DataListItem 
-          label="Дополнительное ПО" 
-          value={additionalSoftware || "—"} 
-          info="Дополнительное ПО"
-        />
-
-        <DataListItem 
-          label="Время наработки" 
-          value={operTime || "—"} 
-          info="С момента запуска"
-        />
-
-        <DataListItem 
-          label="Текущее время" 
-          value={currentTime || "—"} 
-          info="Время в устройстве"
-        />
-      </DataListRoot>
     </div>
+    
   );
 }
 

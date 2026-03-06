@@ -5,7 +5,7 @@
 }
 
 .app {
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
   font-family: system-ui, -apple-system, sans-serif;
@@ -22,7 +22,7 @@
 h1 {
   color: #1D2440;
   margin-bottom: 20px;
-  font-size: 24px;
+  font-size: 40px;
   font-weight: bold;
 }
 
@@ -35,7 +35,7 @@ h1 {
 
 button {
   padding: 10px 20px;
-  font-size: 16px;
+  font-size: 18px;
   color: #1D2440;
   border: none;
   background: #A5B0D6;
