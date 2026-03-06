@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { DataListRoot, DataListItem } from "./components/ui/data-list";
 import { DataList } from "@chakra-ui/react";
 import { InfoTip } from "./components/ui/toggle-tip";
 import { TouController } from "./TouController";
@@ -136,7 +135,7 @@ function App() {
 
   const stats = [
     { label: "Серийный номер", value: `${serialNumber || "—"}`, helpText: "Уникальный идентификатор устройства" },
-    { label: "Тип устройства", value: `${deviceType || "—"}`, helpText: "Код модели" },
+    { label: "Тип устройства", value: deviceType ? `РиМ ТОУ ${deviceType}` : "—", helpText: "Код модели" },
     { label: "Версия ПО", value: `${mainSoftware || "—"} `, helpText: "Основное ПО" },
     { label: "Дополнительное ПО", value: `${additionalSoftware || "—"}`, helpText: "Дополнительное ПО"},
     { label: "Время наработки", value: `${operTime || "—"}`, helpText: "С момента запуска" },
@@ -152,6 +151,7 @@ function App() {
         <button onClick={connectFunc}>Подключиться</button>
         <button onClick={disconnectFunc}>Отключиться</button>
         <button onClick={setTimeFunc}>Настроить время</button>
+        <button onClick={readTimeFunc}>Обновить время</button>
       </div>
 
       <DataList.Root className="data-list" size='lg'>
