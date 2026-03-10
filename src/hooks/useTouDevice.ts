@@ -10,6 +10,8 @@ export function useTouDevice() {
   const [additionalSoftware, setAdditionalSoftware] = useState("");
   const [operTime, setOperTime] = useState("");
   const [currentTime, setCurrentTime] = useState("");
+  const [macAddressTou, setMacAddressTou] = useState("");
+  const [macAddressConnected, setMacAddressConnected] = useState("");
 
   const toStringPadStart = (num: number, count: number, data: string = "0"): string => {
     return num.toString().padStart(count, data);
@@ -24,6 +26,8 @@ export function useTouDevice() {
       await readDeviceTypeFunc();
       await readOperTimeFunc();
       await readTimeFunc();
+      await readSettingsSVFunc();
+      await recordMacConnectedFunc();
     } catch (error) {
       console.log("Ошибка: " + (error as Error).message);
     }
@@ -124,6 +128,46 @@ export function useTouDevice() {
     }
   };
 
+  const readSettingsSVFunc = async (): Promise<void> => {
+    try {
+      const dataSettingsSV = await tou.readSettingsSV();
+
+      const bytes = Array.from(dataSettingsSV.rawResponse as number[]);
+      console.log(`Ответ чтения настроек sv-потока: ${TouProtocol.formatPacket(bytes)}`);
+      console.log(
+        `mac адрес тоу hex: ${TouProtocol.formatPacket(dataSettingsSV.macTou)}`,
+      );
+      console.log(
+        `mac адрес подключенного hex: ${TouProtocol.formatPacket(dataSettingsSV.macConnectedDevice)}`,
+      );
+      setMacAddressTou(Array.from(dataSettingsSV.macTou)
+      .map((address) => address.toString(16).toUpperCase().padStart(2, "0"))
+      .join(":"));
+      setMacAddressConnected(Array.from(dataSettingsSV.macConnectedDevice)
+      .map((address) => address.toString(16).toUpperCase().padStart(2, "0"))
+      .join(":"));
+    } catch (error) {
+      console.log("Не удалось прочитать: " + (error as Error).message);
+    }
+  };
+
+  const recordMacConnectedFunc = async (): Promise<void> => {
+    try {
+      const macAddress = [0x01, 0x0C, 0xCD, 0x04, 0x00, 0x01];
+
+      const rawResponse = await tou.recordMacConnected(
+        macAddress
+      );
+
+      const bytes = Array.from(rawResponse);
+      console.log(`Ответ установки mac-адреса: ${TouProtocol.formatPacket(bytes)}`);
+      console.log("Установили mac-адрес подключенного устройства");
+      readSettingsSVFunc();
+    } catch (error) {
+      console.log("Не удалось прочитать: " + (error as Error).message);
+    }
+  };
+
   useEffect(() => {
     if (!navigator.serial) {
       console.log("Web Serial API не поддерживается! Используйте Chrome/Edge");
@@ -139,8 +183,14 @@ export function useTouDevice() {
     { label: "Текущее время", value: `${currentTime || "—"}`, helpText: "Время в устройстве" },
   ]
 
+  const macAddress = [
+    {  name: "ТОУ отправитель", value: `${macAddressTou || "00:00:00:00:00:00"}`},
+    {  name: "Получатель", value: `${macAddressConnected || "00:00:00:00:00:00"}`},
+  ]
+
   return {
     stats,
+    macAddress,
     connectFunc,
     disconnectFunc,
     setTimeFunc,

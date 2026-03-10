@@ -6,6 +6,7 @@ import type {
   OperTimeData,
   FormattedOperTime,
   TimeData,
+  SettingsSVData,
   ErrorMessages
 } from "./types";
 
@@ -22,6 +23,7 @@ interface TouProtocolType {
   parseOperTime(response: RawResponse): OperTimeData;
   formatOperTime(operTime: number[]): FormattedOperTime;
   parseTime(response: RawResponse): TimeData;
+  parseSettingsSV(response: RawResponse): SettingsSVData;
 }
 
 export const TouProtocol: TouProtocolType = {
@@ -155,6 +157,19 @@ export const TouProtocol: TouProtocolType = {
       hourTime: arr[8],
       minuteTime: arr[9],
       secTime: arr[10],
+      rawResponse: arr,
+    };
+  },
+
+  parseSettingsSV(response: RawResponse): SettingsSVData {
+    const arr = Array.from(response);
+    type macAddress = [number, number, number, number, number, number];
+    const macTou: macAddress = [arr[5], arr[6], arr[7], arr[8], arr[9], arr[10]];
+    const macConnectedDevice: macAddress = [arr[11], arr[12], arr[13], arr[14], arr[15], arr[16]];
+    
+    return {
+      macTou: macTou,
+      macConnectedDevice: macConnectedDevice,
       rawResponse: arr,
     };
   },

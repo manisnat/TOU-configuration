@@ -39,6 +39,12 @@ export interface TimeData {
   rawResponse: RawResponse;
 }
 
+export interface SettingsSVData {
+  macTou: [number, number, number, number, number, number];
+  macConnectedDevice: [number, number, number, number, number, number];
+  rawResponse: RawResponse;
+}
+
 export interface ErrorMessages {
   [errorCode: number]: string;
 }

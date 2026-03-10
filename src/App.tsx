@@ -3,9 +3,11 @@ import { Header } from "./components/layout/Header";
 import { DeviceControls } from "./components/device/DeviceControls";
 import { DeviceStats } from "./components/device/DeviceStats";
 import { useTouDevice } from "./hooks/useTouDevice";
+import { MacAddressDevices } from "./components/device/MacAddress";
 
 function App() {  
   const {stats,
+    macAddress,
     connectFunc,
     disconnectFunc,
     setTimeFunc,
@@ -25,6 +27,7 @@ function App() {
       />
 
       <DeviceStats stats={stats} />
+      <MacAddressDevices macAddress={macAddress} />
     </VStack>
   );
 }

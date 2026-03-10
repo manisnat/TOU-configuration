@@ -4,7 +4,8 @@ import type {
   SerialNumberData, 
   DeviceTypeData, 
   OperTimeData, 
-  TimeData
+  TimeData,
+  SettingsSVData,
 } from './types';
 
 interface SerialPort {
@@ -184,5 +185,20 @@ export class TouController {
     const parsed = this.protocol.parseTime(response);
 
     return parsed;
+  }
+
+  public async readSettingsSV(): Promise<SettingsSVData> {
+    const response = await this.sendCommand(0x42);
+    const parsed = this.protocol.parseSettingsSV(response);
+
+    return parsed;
+  }
+
+  public async recordMacConnected(
+    macAddress: number[]
+  ): Promise<Uint8Array> {
+    const response = await this.sendCommand(0x41, macAddress);
+
+    return response;
   }
 }
