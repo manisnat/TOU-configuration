@@ -1,5 +1,5 @@
 import { VStack } from "@chakra-ui/react";
-import { Header } from "./components/layuot/Header";
+import { Header } from "./components/layout/Header";
 import { DeviceControls } from "./components/device/DeviceControls";
 import { DeviceStats } from "./components/device/DeviceStats";
 import { useTouDevice } from "./hooks/useTouDevice";
