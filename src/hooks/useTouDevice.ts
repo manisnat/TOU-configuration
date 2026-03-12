@@ -28,6 +28,9 @@ export function useTouDevice() {
       await readTimeFunc();
       await readSettingsSVFunc();
       await recordMacConnectedFunc();
+      await readIdSVFunc();
+      await recordIdSVFunc();
+      await readIdVlanFunc();
     } catch (error) {
       console.log("Ошибка: " + (error as Error).message);
     }
@@ -162,7 +165,56 @@ export function useTouDevice() {
       const bytes = Array.from(rawResponse);
       console.log(`Ответ установки mac-адреса: ${TouProtocol.formatPacket(bytes)}`);
       console.log("Установили mac-адрес подключенного устройства");
-      readSettingsSVFunc();
+      await readSettingsSVFunc();
+    } catch (error) {
+      console.log("Не удалось прочитать: " + (error as Error).message);
+    }
+  };
+
+  const readIdSVFunc = async (): Promise<void> => {
+    try {
+      const dataIdSV = await tou.readIdSV();
+
+      const bytes = Array.from(dataIdSV.rawResponse as number[]);
+      console.log(`Ответ чтения имени устройства (id sv): ${TouProtocol.formatPacket(bytes)}`);
+
+      console.log(`Ответ чтения id sv: ${dataIdSV.nameTou}`);
+
+    } catch (error) {
+      console.log("Не удалось прочитать: " + (error as Error).message);
+    }
+  };
+
+  const recordIdSVFunc = async (): Promise<void> => {
+    try {
+      const rawResponse = await tou.recordIdSV('RiM61850_SV1'); // нужны ограничения на количество символов N ≤ 69
+
+      const bytes = Array.from(rawResponse);
+      console.log(`Ответ установки имени устройства (id sv): ${TouProtocol.formatPacket(bytes)}`);
+      await readIdSVFunc();
+
+    } catch (error) {
+      console.log("Не удалось прочитать: " + (error as Error).message);
+    }
+  };
+
+  const readIdVlanFunc = async (): Promise<void> => {
+    try {
+      const dataIdVlan = await tou.readIdVlan();
+
+      const bytes = Array.from(dataIdVlan.rawResponse as number[]);
+      console.log(`Ответ чтения кадра SV-потока: ${TouProtocol.formatPacket(bytes)}`);
+      console.log(
+        `VLAN hex: ${TouProtocol.formatPacket(dataIdVlan.vlan)}`,
+      );
+      console.log(
+        `Id VLAN: ${dataIdVlan.idVlan}`);
+      console.log(
+        `priority VLAN: ${dataIdVlan.priorityVlan}`,
+      );
+      console.log(
+        `Drop Eligible Indicator: ${dataIdVlan.dropIndicator}`,
+      );
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }

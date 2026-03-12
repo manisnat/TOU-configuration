@@ -6,6 +6,8 @@ import type {
   OperTimeData, 
   TimeData,
   SettingsSVData,
+  IdSVData, 
+  IdVlanData,
 } from './types';
 
 interface SerialPort {
@@ -122,8 +124,11 @@ export class TouController {
       data,
     );
 
+    const start = Date.now();
     await this.writer.write(new Uint8Array(packet));
+    console.log(`Отправлена команда ${command} за ${Date.now() - start}мс`);
     const { value, done } = await this.reader.read();
+    console.log(`Ответ команды ${command} получен через ${Date.now() - start}мс`);
 
     if (done) {
       await this.disconnect();
@@ -200,5 +205,30 @@ export class TouController {
     const response = await this.sendCommand(0x41, macAddress);
 
     return response;
+  }
+
+  public async readIdSV(): Promise<IdSVData> {
+    const response = await this.sendCommand(0x43);
+    const parsed = this.protocol.parseIdSV(response);
+
+    return parsed;
+  }
+
+  public async recordIdSV(nameTou: string): Promise<Uint8Array> {
+    let nameBytes: number[] = [];
+    for (let i = 0; i < nameTou.length; i++) {
+      nameBytes[i] = nameTou.charCodeAt(i);
+    }
+
+    const response = await this.sendCommand(0x44, nameBytes);
+
+    return response;
+  }
+
+  public async readIdVlan(): Promise<IdVlanData> {
+    const response = await this.sendCommand(0x45);
+    const parsed = this.protocol.parseIdVlan(response);
+
+    return parsed;
   }
 }

@@ -7,6 +7,8 @@ import type {
   FormattedOperTime,
   TimeData,
   SettingsSVData,
+  IdSVData,
+  IdVlanData,
   ErrorMessages
 } from "./types";
 
@@ -24,6 +26,8 @@ interface TouProtocolType {
   formatOperTime(operTime: number[]): FormattedOperTime;
   parseTime(response: RawResponse): TimeData;
   parseSettingsSV(response: RawResponse): SettingsSVData;
+  parseIdSV(response: RawResponse): IdSVData;
+  parseIdVlan(response: RawResponse): IdVlanData;
 }
 
 export const TouProtocol: TouProtocolType = {
@@ -173,4 +177,34 @@ export const TouProtocol: TouProtocolType = {
       rawResponse: arr,
     };
   },
+
+  parseIdSV(response: RawResponse): IdSVData {
+    const arr = Array.from(response);
+
+    const nameBytes = arr.slice(5, arr.length - 2);
+    const nameTou = String.fromCharCode(...nameBytes);
+
+    return {
+      nameTou: nameTou,
+      rawResponse: arr,
+    };
+  },  
+
+  parseIdVlan(response: RawResponse): IdVlanData {
+    const arr = Array.from(response);
+    const firstByte = arr[19];  
+    const secondByte = arr[20]; 
+
+    const priorityVlan = (firstByte >> 5) & 0x07;  // маска 0x07 = 0b111
+    const dropIndicator = (firstByte >> 4) & 0x01;
+    const idVlan = ((firstByte & 0x0F) << 8) | secondByte;
+
+    return {
+      vlan: [firstByte, secondByte],
+      priorityVlan: priorityVlan,
+      dropIndicator: dropIndicator,
+      idVlan: idVlan,
+      rawResponse: arr,
+    };
+  }, 
 };

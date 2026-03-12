@@ -45,6 +45,19 @@ export interface SettingsSVData {
   rawResponse: RawResponse;
 }
 
+export interface IdSVData {
+  nameTou: string;
+  rawResponse: RawResponse;
+}
+
+export interface IdVlanData {
+  vlan: [number, number];
+  priorityVlan: number;
+  dropIndicator: number;
+  idVlan: number;
+  rawResponse: RawResponse;
+}
+
 export interface ErrorMessages {
   [errorCode: number]: string;
 }
