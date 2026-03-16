@@ -51,10 +51,11 @@ export interface IdSVData {
 }
 
 export interface IdVlanData {
-  vlan: [number, number];
+  vlan: [number, number, number, number];
   priorityVlan: number;
   dropIndicator: number;
   idVlan: number;
+  appId: number;
   rawResponse: RawResponse;
 }
 

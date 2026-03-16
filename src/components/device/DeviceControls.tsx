@@ -6,13 +6,15 @@ interface DeviceControlsProps {
   onDisconnect: () => void;
   onSetTime: () => void;
   onRefreshTime: () => void;
+  onRecordIdVlan: () => void;
 }
 
 export function DeviceControls({ 
   onConnect, 
   onDisconnect, 
   onSetTime, 
-  onRefreshTime
+  onRefreshTime,
+  onRecordIdVlan,
 }: DeviceControlsProps) {
   return (
     <HStack>
@@ -21,6 +23,7 @@ export function DeviceControls({
         <Button onClick={onDisconnect}>Отключиться</Button>
         <Button onClick={onSetTime}>Настроить время</Button>
         <Button onClick={onRefreshTime}>Обновить время</Button>
+        <Button onClick={onRecordIdVlan}>Записать id vlan</Button>
       </Group>
       <ColorModeButton bg={"bg.emphasized"} />
     </HStack>

@@ -11,7 +11,8 @@ function App() {
     connectFunc,
     disconnectFunc,
     setTimeFunc,
-    readTimeFunc
+    readTimeFunc,
+    recordIdVlanFunc,
   } = useTouDevice();
 
 
@@ -24,6 +25,7 @@ function App() {
         onDisconnect={disconnectFunc}
         onSetTime={setTimeFunc}
         onRefreshTime={readTimeFunc}
+        onRecordIdVlan={recordIdVlanFunc}
       />
 
       <DeviceStats stats={stats} />

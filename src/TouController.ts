@@ -124,20 +124,38 @@ export class TouController {
       data,
     );
 
-    const start = Date.now();
     await this.writer.write(new Uint8Array(packet));
-    console.log(`Отправлена команда ${command} за ${Date.now() - start}мс`);
-    const { value, done } = await this.reader.read();
-    console.log(`Ответ команды ${command} получен через ${Date.now() - start}мс`);
-
-    if (done) {
-      await this.disconnect();
-      throw new Error("Соединение потеряно");
-    }
+    const value = await this.readResponse();
 
     this.protocol.checkResponseError(value, command);
-
     return value;
+  }
+
+  private async readResponse(): Promise<Uint8Array> {
+    if (!this.reader) {
+        throw new Error("Reader не инициализирован");
+    }
+    const chunks: Uint8Array[] = [];
+
+    while (true) {
+      const { value, done } = await this.reader.read();
+
+      if (done) {
+        await this.disconnect();
+        throw new Error("Соединение потеряно");
+      }
+
+      chunks.push(value);
+      const fullResponse = new Uint8Array(chunks.flatMap(chunks=>[...chunks]));
+
+      if (fullResponse.length >= 5) {
+        const expectedLength = 5 + fullResponse[4];
+
+        if (fullResponse.length === expectedLength) {
+          return fullResponse;
+        }
+      }
+    }
   }
 
   public async readSerialNumber(): Promise<SerialNumberData> {
@@ -230,5 +248,18 @@ export class TouController {
     const parsed = this.protocol.parseIdVlan(response);
 
     return parsed;
+  }
+
+  public async recordIdVlan(idVlan: number): Promise<Uint8Array> {
+    // if (idVlan < 0 || idVlan > 4095) {
+    //     throw new Error("VLAN ID должен быть от 0 до 4095");
+    // }
+
+    const idVlanBytes: number[] = [idVlan & 0xFF, (idVlan >> 8) & 0xFF]; 
+    console.log(`Устанавливаем VLAN ID: ${idVlan}, байты:`, idVlanBytes.map(b => '0x' + b.toString(16)));
+    
+    const response = await this.sendCommand(0x4A, idVlanBytes);
+
+    return response;
   }
 }

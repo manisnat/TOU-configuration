@@ -80,6 +80,17 @@ export const TouProtocol: TouProtocolType = {
       throw new Error("Получен пустой ответ");
     }
 
+    const arr = Array.from(response);
+    const responseNoCrc: number[] = arr.slice(0, -2);
+    const crc: number = this.calculateCRC(responseNoCrc);
+    if ((arr.at(-2) !== (crc & 0xff)) && (arr.at(-1) !== ((crc >> 8) & 0xff))) {
+      throw new Error("Не совпадает контрольная сумма");
+    }
+
+    if (response[3] !== expectedCommand) {
+      throw new Error("Пришёл не тот код функции от ТОУ");
+    }
+
     // Если код функции = ожидаемый + 0x80, значит это ошибка
     if (response[3] === expectedCommand + 0x80) {
       throw new Error(
@@ -198,12 +209,14 @@ export const TouProtocol: TouProtocolType = {
     const priorityVlan = (firstByte >> 5) & 0x07;  // маска 0x07 = 0b111
     const dropIndicator = (firstByte >> 4) & 0x01;
     const idVlan = ((firstByte & 0x0F) << 8) | secondByte;
+    const appId: number = (arr[23]<<8) | arr[24];
 
     return {
-      vlan: [firstByte, secondByte],
+      vlan: [arr[17], arr[18], firstByte, secondByte],
       priorityVlan: priorityVlan,
       dropIndicator: dropIndicator,
       idVlan: idVlan,
+      appId: appId,
       rawResponse: arr,
     };
   }, 

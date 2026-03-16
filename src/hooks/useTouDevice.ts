@@ -31,6 +31,7 @@ export function useTouDevice() {
       await readIdSVFunc();
       await recordIdSVFunc();
       await readIdVlanFunc();
+      await recordIdVlanFunc();
     } catch (error) {
       console.log("Ошибка: " + (error as Error).message);
     }
@@ -215,6 +216,22 @@ export function useTouDevice() {
       console.log(
         `Drop Eligible Indicator: ${dataIdVlan.dropIndicator}`,
       );
+      console.log(
+        `APPID: ${dataIdVlan.appId}`,
+      );
+    } catch (error) {
+      console.log("Не удалось прочитать: " + (error as Error).message);
+    }
+  };
+
+  const recordIdVlanFunc = async (): Promise<void> => {
+    try {
+      const rawResponse = await tou.recordIdVlan(200); // нужны ограничение 0 - 4095
+
+      const bytes = Array.from(rawResponse);
+      console.log(`Ответ установки id vlan: ${TouProtocol.formatPacket(bytes)}`);
+      await readIdVlanFunc();
+
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }
@@ -247,5 +264,6 @@ export function useTouDevice() {
     disconnectFunc,
     setTimeFunc,
     readTimeFunc,
+    recordIdVlanFunc,
   };
 }
