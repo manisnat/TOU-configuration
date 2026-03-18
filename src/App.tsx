@@ -4,6 +4,7 @@ import { DeviceControls } from "./components/device/DeviceControls";
 import { DeviceStats } from "./components/device/DeviceStats";
 import { useTouDevice } from "./hooks/useTouDevice";
 import { MacAddressDevices } from "./components/device/MacAddress";
+import { DeviceId } from "./components/device/DeviceId";
 
 function App() {  
   const {stats,
@@ -12,7 +13,10 @@ function App() {
     disconnectFunc,
     setTimeFunc,
     readTimeFunc,
+    recordIdSVFunc,
     recordIdVlanFunc,
+    idSV,
+    idVlan
   } = useTouDevice();
 
 
@@ -25,11 +29,11 @@ function App() {
         onDisconnect={disconnectFunc}
         onSetTime={setTimeFunc}
         onRefreshTime={readTimeFunc}
-        onRecordIdVlan={recordIdVlanFunc}
       />
 
       <DeviceStats stats={stats} />
       <MacAddressDevices macAddress={macAddress} />
+      <DeviceId idSV={idSV} idVlan={idVlan} onIdVlan={recordIdVlanFunc} onIdSV={recordIdSVFunc}/>
     </VStack>
   );
 }

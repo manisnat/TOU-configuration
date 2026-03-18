@@ -11,7 +11,7 @@ interface MacAddressProps {
 
 export function MacAddressDevices({macAddress}: MacAddressProps) {
   return (
-    <Table.Root size="lg" interactive maxWidth="500px">
+    <Table.Root size="lg" interactive maxWidth="400px">
       <Table.Header>
         <Table.Row>
           <Table.ColumnHeader>Устройство</Table.ColumnHeader>

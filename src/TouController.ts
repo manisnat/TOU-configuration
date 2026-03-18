@@ -251,9 +251,9 @@ export class TouController {
   }
 
   public async recordIdVlan(idVlan: number): Promise<Uint8Array> {
-    // if (idVlan < 0 || idVlan > 4095) {
-    //     throw new Error("VLAN ID должен быть от 0 до 4095");
-    // }
+    if (idVlan < 0 || idVlan > 4095) {
+        throw new Error("VLAN ID должен быть от 0 до 4095");
+    }
 
     const idVlanBytes: number[] = [idVlan & 0xFF, (idVlan >> 8) & 0xFF]; 
     console.log(`Устанавливаем VLAN ID: ${idVlan}, байты:`, idVlanBytes.map(b => '0x' + b.toString(16)));
