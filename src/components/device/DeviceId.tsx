@@ -1,5 +1,5 @@
 import { Button, Input, Table } from "@chakra-ui/react";
-import { useIdInput } from "../../hooks/useIdInput";
+import { useInput } from "../../hooks/useInput";
 
 interface DeviceIdPops {
   idSV: string,
@@ -9,7 +9,7 @@ interface DeviceIdPops {
 }
 
 export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
-  const {newIdVlan, newIdSV, handleChangeIdVlan, handleChangeIdSV, resetIdVlan, resetIdSV} = useIdInput();
+  const {newIdVlan, newIdSV, handleChangeIdVlan, handleChangeIdSV, resetIdVlan, resetIdSV} = useInput();
 
   const handleSaveIdVlan = () => {
     onIdVlan(Number(newIdVlan));
@@ -42,9 +42,7 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
             />
           </Table.Cell>
           <Table.Cell textAlign="end">
-            <Button
-              onClick={handleSaveIdSV}
-            >
+            <Button onClick={handleSaveIdSV}>
               Записать
             </Button>
           </Table.Cell>
@@ -61,9 +59,7 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
             />
           </Table.Cell>
           <Table.Cell textAlign="end">
-            <Button
-              onClick={handleSaveIdVlan}
-            >
+            <Button onClick={handleSaveIdVlan}>
               Записать
             </Button>
           </Table.Cell>

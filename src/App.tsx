@@ -13,6 +13,7 @@ function App() {
     disconnectFunc,
     setTimeFunc,
     readTimeFunc,
+    recordMacConnectedFunc,
     recordIdSVFunc,
     recordIdVlanFunc,
     idSV,
@@ -32,7 +33,7 @@ function App() {
       />
 
       <DeviceStats stats={stats} />
-      <MacAddressDevices macAddress={macAddress} />
+      <MacAddressDevices macAddress={macAddress} onMacAddress={recordMacConnectedFunc}/>
       <DeviceId idSV={idSV} idVlan={idVlan} onIdVlan={recordIdVlanFunc} onIdSV={recordIdSVFunc}/>
     </VStack>
   );

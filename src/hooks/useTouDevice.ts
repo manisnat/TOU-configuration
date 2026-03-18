@@ -269,6 +269,7 @@ export function useTouDevice() {
     disconnectFunc,
     setTimeFunc,
     readTimeFunc,
+    recordMacConnectedFunc,
     recordIdSVFunc,
     recordIdVlanFunc,
     idSV,
