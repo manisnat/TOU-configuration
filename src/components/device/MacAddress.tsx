@@ -1,4 +1,5 @@
-import { Table, Input, Button, VStack } from "@chakra-ui/react";
+import { Table, Input, Button, VStack, Field } from "@chakra-ui/react";
+import { withMask } from "use-mask-input";
 import { useInput } from "../../hooks/useInput";
 
 interface MacAddressItem {
@@ -8,16 +9,39 @@ interface MacAddressItem {
 
 interface MacAddressProps {
   macAddress: MacAddressItem[];
-  onMacAddress: () => void;
+  onMacAddress: (macAddress: number[]) => void;
+}
+
+// 01:0C:CD:04:00:01
+function macToArray(macString: string): number[] {
+  const cleanMac = macString.replace(/[:\-\s]/g, '');
+
+  const macArray = [];
+  for (let i = 0; i < cleanMac.length; i+=2) {
+    macArray.push(parseInt(cleanMac.slice(i,i+2), 16));
+  }
+
+  return macArray;
 }
 
 export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
-  const {newMacAddress, handleChangeMacAddress, resetMacAddress} = useInput();
+  const {
+    newMacAddress, 
+    isErrorMac, 
+    errorMessageMac, 
+    validMacAddress, 
+    handleChangeMacAddress, 
+    resetMacAddress
+  } = useInput();
 
   const handleSaveMacAddress = () => {
-    alert(newMacAddress);
-    onMacAddress(); // нужна функция преобразования строки в массив [0x01, 0x0C, 0xCD, 0x04, 0x00, 0x01]
-    resetMacAddress();
+    const cleanMac = newMacAddress.replace(/[^0-9A-Za-z]/g, '');
+    validMacAddress(cleanMac);
+    if (!isErrorMac && cleanMac.length === 12 && cleanMac[11] !== '') {
+      onMacAddress(macToArray(newMacAddress));
+      resetMacAddress();
+    }
+
   }
 
   return (
@@ -36,18 +60,25 @@ export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
               <Table.Cell textAlign="end">{address.value}</Table.Cell>
             </Table.Row>
           ))}
+
           <Table.Row>
-            <Table.Cell>Новый MAC-адрес подключенного устройства</Table.Cell>
-            <Table.Cell textAlign="end">
-              <Input 
-                type="text"
-                value={newMacAddress}
-                onChange={handleChangeMacAddress}
-                placeholder="00:00:00:00:00:00"
-              >
-              </Input>
-            </Table.Cell>
-          </Table.Row>
+              <Table.Cell>Новый MAC-адрес подключенного устройства</Table.Cell>
+              <Table.Cell textAlign="end">
+                <Field.Root invalid={isErrorMac}>
+                <Input 
+                  type="text"
+                  value={newMacAddress}
+                  onChange={handleChangeMacAddress}
+                  placeholder="00:00:00:00:00:00"
+                  maxLength={17}
+                  ref={withMask("**:**:**:**:**:**")}
+                >
+                </Input>
+                {isErrorMac && <Field.ErrorText>{errorMessageMac}</Field.ErrorText>}
+                </Field.Root>
+              </Table.Cell>
+            </Table.Row>
+          
         </Table.Body>
       </Table.Root>
       <Button onClick={handleSaveMacAddress}>

@@ -29,7 +29,7 @@ export function useTouDevice() {
       await readOperTimeFunc();
       await readTimeFunc();
       await readSettingsSVFunc();
-      await recordMacConnectedFunc();
+      //await recordMacConnectedFunc();
       await readIdSVFunc();
       //await recordIdSVFunc();
       await readIdVlanFunc();
@@ -157,9 +157,9 @@ export function useTouDevice() {
     }
   };
 
-  const recordMacConnectedFunc = async (): Promise<void> => {
+  const recordMacConnectedFunc = async (macAddress: number[]): Promise<void> => {
     try {
-      const macAddress = [0x01, 0x0C, 0xCD, 0x04, 0x00, 0x01];
+      //const macAddress = [0x01, 0x0C, 0xCD, 0x04, 0x00, 0x01];
 
       const rawResponse = await tou.recordMacConnected(
         macAddress

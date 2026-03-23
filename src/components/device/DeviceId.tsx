@@ -56,6 +56,7 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
               value={newIdVlan}
               onChange={handleChangeIdVlan}
               placeholder="0 - 4095" 
+              maxLength={4}
             />
           </Table.Cell>
           <Table.Cell textAlign="end">
