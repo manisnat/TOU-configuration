@@ -4,18 +4,21 @@ interface UseVlanInputPops {
   newMacAddress: string;
   isErrorMac: boolean;
   errorMessageMac: string;
+  // showSuccessMac: boolean;
   validMacAddress: (value: string) => boolean;
   handleChangeMacAddress: (event: React.ChangeEvent<HTMLInputElement>) => void;
 
   newIdSV: string;
   isErrorIdSV: boolean;
   errorMessageIdSV: string;
+  showSuccessSV: boolean;
   validIdSV: (value: string) => boolean;
   handleChangeIdSV: (event: React.ChangeEvent<HTMLInputElement>) => void;
 
   newIdVlan: string;
   isErrorIdVlan: boolean;
   errorMessageIdVlan: string;
+  showSuccessVlan: boolean;
   validIdVlan: (value: string) => boolean;
   handleChangeIdVlan: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
@@ -27,9 +30,11 @@ export function useInput(): UseVlanInputPops {
   const [newIdSV, setNewIdSV] = useState('');
   const [isErrorIdSV, setIsErrorIdSV] = useState(false);
   const [errorMessageIdSV, setErrorMessageIdSV] = useState('');
+  const [showSuccessSV, setShowSuccessSV] = useState(false);
   const [newIdVlan, setNewIdVlan] = useState('');
   const [isErrorIdVlan, setIsErrorIdVlan] = useState(false);
   const [errorMessageIdVlan, setErrorMessageIdVlan] = useState('');
+  const [showSuccessVlan, setShowSuccessVlan] = useState(false);
 
   // MAC-address
   function validMacAddress(value: string) {
@@ -79,6 +84,7 @@ export function useInput(): UseVlanInputPops {
     } 
     else {
       setIsErrorIdSV(false);
+      setShowSuccessSV(true);
       setErrorMessageIdSV("");
       return true;
     }
@@ -89,6 +95,7 @@ export function useInput(): UseVlanInputPops {
     setNewIdSV(value);
     if (value === '') {
       setIsErrorIdSV(false);
+      setShowSuccessSV(false);
     }
   }
 
@@ -116,6 +123,7 @@ export function useInput(): UseVlanInputPops {
     } 
     else {
       setIsErrorIdVlan(false);
+      setShowSuccessVlan(true);
       setErrorMessageIdVlan("");
       return true;
     }
@@ -129,6 +137,7 @@ export function useInput(): UseVlanInputPops {
     setNewIdVlan(value);
     if (value === '') {
       setIsErrorIdVlan(false);
+      setShowSuccessVlan(false);
     }
   }
 
@@ -141,11 +150,13 @@ export function useInput(): UseVlanInputPops {
     newIdSV,
     isErrorIdSV,
     errorMessageIdSV,
+    showSuccessSV,
     validIdSV,
     handleChangeIdSV,
     newIdVlan,
     isErrorIdVlan,
     errorMessageIdVlan,
+    showSuccessVlan,
     validIdVlan,
     handleChangeIdVlan,
   };

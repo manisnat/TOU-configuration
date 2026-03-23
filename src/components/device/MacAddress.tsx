@@ -1,6 +1,7 @@
-import { Table, Input, Button, VStack, Field } from "@chakra-ui/react";
+import { Table, Input, Button, VStack, Field, Tooltip } from "@chakra-ui/react";
 import { withMask } from "use-mask-input";
 import { useInput } from "../../hooks/useInput";
+import { InfoTip } from "../ui/toggle-tip";
 
 interface MacAddressItem {
   name: string,
@@ -30,16 +31,14 @@ export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
     isErrorMac, 
     errorMessageMac, 
     validMacAddress, 
-    handleChangeMacAddress, 
-    resetMacAddress
+    handleChangeMacAddress
   } = useInput();
 
   const handleSaveMacAddress = () => {
     const cleanMac = newMacAddress.replace(/[^0-9A-Za-z]/g, '');
-    validMacAddress(cleanMac);
-    if (!isErrorMac && cleanMac.length === 12 && cleanMac[11] !== '') {
+    const isValid = validMacAddress(cleanMac);
+    if (!isErrorMac && isValid) {
       onMacAddress(macToArray(newMacAddress));
-      resetMacAddress();
     }
 
   }
@@ -62,7 +61,10 @@ export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
           ))}
 
           <Table.Row>
-              <Table.Cell>Новый MAC-адрес подключенного устройства</Table.Cell>
+              <Table.Cell>
+                Новый MAC-адрес подключенного устройства
+                <InfoTip content="MAC-адрес должен быть в формате 01:0C:CD:04:XX:XX для корректной работы" />
+              </Table.Cell>
               <Table.Cell textAlign="end">
                 <Field.Root invalid={isErrorMac}>
                 <Input 
@@ -81,9 +83,16 @@ export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
           
         </Table.Body>
       </Table.Root>
-      <Button onClick={handleSaveMacAddress}>
-        Записать
-      </Button>
+      <Tooltip.Root>
+        <Tooltip.Trigger asChild>
+          <Button onClick={handleSaveMacAddress}>
+            Записать
+          </Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>
+          MAC-адрес должен быть в формате 01:0C:CD:04:XX:XX для корректной работы
+        </Tooltip.Content>
+      </Tooltip.Root>
     </VStack>
   )
 }

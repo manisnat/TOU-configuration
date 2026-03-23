@@ -1,4 +1,4 @@
-import { Button, Field, Input, Table } from "@chakra-ui/react";
+import { Alert, Button, Field, Input, Table } from "@chakra-ui/react";
 import { useInput } from "../../hooks/useInput";
 
 interface DeviceIdPops {
@@ -13,11 +13,13 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
     newIdSV, 
     isErrorIdSV,
     errorMessageIdSV,
+    showSuccessSV,
     validIdSV,
     handleChangeIdSV,  
     newIdVlan, 
     isErrorIdVlan,
     errorMessageIdVlan,
+    showSuccessVlan,
     validIdVlan,
     handleChangeIdVlan
   } = useInput();
@@ -66,6 +68,16 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
             <Button onClick={handleSaveIdSV}>
               Записать
             </Button>
+            {showSuccessSV && (
+              <Alert.Root status="success">
+                <Alert.Content>
+                  <Alert.Title>vvv</Alert.Title>
+                  <Alert.Description>
+                    sss
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
+            )}
           </Table.Cell>
         </Table.Row>
         <Table.Row key="VlanId">
@@ -87,6 +99,16 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
             <Button onClick={handleSaveIdVlan}>
               Записать
             </Button>
+            {showSuccessVlan && (
+              <Alert.Root status="success">
+                <Alert.Content>
+                  <Alert.Title>vvv</Alert.Title>
+                  <Alert.Description>
+                    sss
+                  </Alert.Description>
+                </Alert.Content>
+              </Alert.Root>
+            )}
           </Table.Cell>
         </Table.Row>
       </Table.Body>
