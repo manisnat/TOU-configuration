@@ -1,7 +1,7 @@
 import { Table, Input, Button, VStack, Field, Tooltip } from "@chakra-ui/react";
 import { withMask } from "use-mask-input";
 import { useInput } from "../../hooks/useInput";
-import { InfoTip } from "../ui/toggle-tip";
+import { toaster } from "../ui/toaster";
 
 interface MacAddressItem {
   name: string,
@@ -10,6 +10,7 @@ interface MacAddressItem {
 
 interface MacAddressProps {
   macAddress: MacAddressItem[];
+  successMacAddress: boolean;
   onMacAddress: (macAddress: number[]) => void;
 }
 
@@ -25,7 +26,7 @@ function macToArray(macString: string): number[] {
   return macArray;
 }
 
-export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
+export function MacAddressDevices({macAddress, successMacAddress, onMacAddress}: MacAddressProps) {
   const {
     newMacAddress, 
     isErrorMac, 
@@ -34,11 +35,17 @@ export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
     handleChangeMacAddress
   } = useInput();
 
-  const handleSaveMacAddress = () => {
+  const handleSaveMacAddress = async () => {
     const cleanMac = newMacAddress.replace(/[^0-9A-Za-z]/g, '');
     const isValid = validMacAddress(cleanMac);
     if (!isErrorMac && isValid) {
-      onMacAddress(macToArray(newMacAddress));
+      await onMacAddress(macToArray(newMacAddress));
+      if (successMacAddress) {
+        toaster.create({
+          description: "MAC-адрес успешно записан",
+          type: "success",
+        });
+      }
     }
 
   }
@@ -61,25 +68,24 @@ export function MacAddressDevices({macAddress, onMacAddress}: MacAddressProps) {
           ))}
 
           <Table.Row>
-              <Table.Cell>
-                Новый MAC-адрес подключенного устройства
-                <InfoTip content="MAC-адрес должен быть в формате 01:0C:CD:04:XX:XX для корректной работы" />
-              </Table.Cell>
-              <Table.Cell textAlign="end">
-                <Field.Root invalid={isErrorMac}>
-                <Input 
-                  type="text"
-                  value={newMacAddress}
-                  onChange={handleChangeMacAddress}
-                  placeholder="00:00:00:00:00:00"
-                  maxLength={17}
-                  ref={withMask("**:**:**:**:**:**")}
-                >
-                </Input>
-                {isErrorMac && <Field.ErrorText>{errorMessageMac}</Field.ErrorText>}
-                </Field.Root>
-              </Table.Cell>
-            </Table.Row>
+            <Table.Cell>
+              Новый MAC-адрес подключенного устройства
+            </Table.Cell>
+            <Table.Cell textAlign="end">
+              <Field.Root invalid={isErrorMac}>
+              <Input 
+                type="text"
+                value={newMacAddress}
+                onChange={handleChangeMacAddress}
+                placeholder="00:00:00:00:00:00"
+                maxLength={17}
+                ref={withMask("**:**:**:**:**:**")}
+              >
+              </Input>
+              {isErrorMac && <Field.ErrorText>{errorMessageMac}</Field.ErrorText>}
+              </Field.Root>
+            </Table.Cell>
+          </Table.Row>
           
         </Table.Body>
       </Table.Root>

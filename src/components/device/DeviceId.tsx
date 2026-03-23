@@ -1,42 +1,55 @@
-import { Alert, Button, Field, Input, Table } from "@chakra-ui/react";
+import { Button, Field, Input, Table } from "@chakra-ui/react";
 import { useInput } from "../../hooks/useInput";
+import { toaster } from "../ui/toaster";
 
 interface DeviceIdPops {
   idSV: string,
   idVlan: string,
+  successIdSV: boolean;
+  successIdVlan: boolean;
   onIdVlan: (idVlan: number) => void;
   onIdSV: (idSV: string) => void;
 }
 
-export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
+export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, onIdSV}: DeviceIdPops) {
   const { 
     newIdSV, 
     isErrorIdSV,
     errorMessageIdSV,
-    showSuccessSV,
     validIdSV,
     handleChangeIdSV,  
     newIdVlan, 
     isErrorIdVlan,
     errorMessageIdVlan,
-    showSuccessVlan,
     validIdVlan,
     handleChangeIdVlan
   } = useInput();
 
-  const handleSaveIdSV = () => {
+  const handleSaveIdSV = async () => {
     const cleanIdSV = newIdSV.replace(/\s+/g, '');
     const isValid = validIdSV(cleanIdSV);
     if (!isErrorIdSV && isValid && cleanIdSV.length <= 12) {
-      onIdSV(cleanIdSV);
+      await onIdSV(cleanIdSV);
+      if (successIdSV) {
+        toaster.create({
+          description: "SV id успешно записан",
+          type: "success",
+        });
+      }
     }
   }
 
-  const handleSaveIdVlan = () => {
+  const handleSaveIdVlan = async () => {
     const cleanIdVlan = newIdVlan.replace(/[^0-9]/g, '');
     const isValid = validIdVlan(cleanIdVlan);
     if (!isErrorIdVlan && isValid) {
-      onIdVlan(Number(cleanIdVlan));
+      await onIdVlan(Number(cleanIdVlan));
+      if (successIdVlan) {
+        toaster.create({
+          description: "Vlan id успешно записан",
+          type: "success",
+        });
+      }
     }
   }
 
@@ -68,16 +81,6 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
             <Button onClick={handleSaveIdSV}>
               Записать
             </Button>
-            {showSuccessSV && (
-              <Alert.Root status="success">
-                <Alert.Content>
-                  <Alert.Title>vvv</Alert.Title>
-                  <Alert.Description>
-                    sss
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert.Root>
-            )}
           </Table.Cell>
         </Table.Row>
         <Table.Row key="VlanId">
@@ -99,16 +102,6 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
             <Button onClick={handleSaveIdVlan}>
               Записать
             </Button>
-            {showSuccessVlan && (
-              <Alert.Root status="success">
-                <Alert.Content>
-                  <Alert.Title>vvv</Alert.Title>
-                  <Alert.Description>
-                    sss
-                  </Alert.Description>
-                </Alert.Content>
-              </Alert.Root>
-            )}
           </Table.Cell>
         </Table.Row>
       </Table.Body>

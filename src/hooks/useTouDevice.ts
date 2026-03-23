@@ -11,9 +11,12 @@ export function useTouDevice() {
   const [operTime, setOperTime] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const [macAddressTou, setMacAddressTou] = useState("");
+  const [successMacAddress, setSuccessMacAddress] = useState(false);
   const [macAddressConnected, setMacAddressConnected] = useState("");
   const [idSV, setIdSV] = useState("");
+  const [successIdSV, setSuccessIdSV] = useState(false);
   const [idVlan, setIdVlan] = useState("");
+  const [successIdVlan, setSuccessIdVlan] = useState(false);
 
   const toStringPadStart = (num: number, count: number, data: string = "0"): string => {
     return num.toString().padStart(count, data);
@@ -161,7 +164,7 @@ export function useTouDevice() {
     try {
       //const macAddress = [0x01, 0x0C, 0xCD, 0x04, 0x00, 0x01];
 
-      const rawResponse = await tou.recordMacConnected(
+      const {rawResponse, isSuccess} = await tou.recordMacConnected(
         macAddress
       );
 
@@ -169,6 +172,7 @@ export function useTouDevice() {
       console.log(`Ответ установки mac-адреса: ${TouProtocol.formatPacket(bytes)}`);
       console.log("Установили mac-адрес подключенного устройства");
       await readSettingsSVFunc();
+      setSuccessMacAddress(isSuccess);
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }
@@ -191,13 +195,13 @@ export function useTouDevice() {
   const recordIdSVFunc = async (idSV: string): Promise<void> => {
     try {
       // RiM61850_SV1
-      const rawResponse = await tou.recordIdSV(idSV); // нужны ограничения на количество символов N ≤ 69
+      const { rawResponse, isSuccess } = await tou.recordIdSV(idSV); // нужны ограничения на количество символов N ≤ 69
 
       const bytes = Array.from(rawResponse);
       console.log(`Ответ установки имени устройства (id sv): ${TouProtocol.formatPacket(bytes)}`);
       
-
       await readIdSVFunc();
+      setSuccessIdSV(isSuccess);
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }
@@ -231,12 +235,12 @@ export function useTouDevice() {
 
   const recordIdVlanFunc = async (idVlan: number): Promise<void> => {
     try {
-      const rawResponse = await tou.recordIdVlan(idVlan); // нужны ограничение 0 - 4095
+      const {rawResponse, isSuccess} = await tou.recordIdVlan(idVlan); // нужны ограничение 0 - 4095
 
       const bytes = Array.from(rawResponse);
       console.log(`Ответ установки id vlan: ${TouProtocol.formatPacket(bytes)}`);
       await readIdVlanFunc();
-
+      setSuccessIdVlan(isSuccess);
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }
@@ -265,6 +269,11 @@ export function useTouDevice() {
   return {
     stats,
     macAddress,
+    successMacAddress,
+    idSV,
+    successIdSV,
+    idVlan,
+    successIdVlan,
     connectFunc,
     disconnectFunc,
     setTimeFunc,
@@ -272,7 +281,5 @@ export function useTouDevice() {
     recordMacConnectedFunc,
     recordIdSVFunc,
     recordIdVlanFunc,
-    idSV,
-    idVlan
   };
 }

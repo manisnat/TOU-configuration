@@ -113,7 +113,7 @@ export class TouController {
     }
   }
 
-  private async sendCommand(command: number, data: number[] = []): Promise<Uint8Array> {
+  private async sendCommand(command: number, data: number[] = []): Promise<{response: Uint8Array, isSuccess: boolean}> {
     if (!this.isConnected || !this.writer || !this.reader) {
       throw new Error("Нет подключения к устройству");
     }
@@ -125,10 +125,10 @@ export class TouController {
     );
 
     await this.writer.write(new Uint8Array(packet));
-    const value = await this.readResponse();
+    const response = await this.readResponse();
 
-    this.protocol.checkResponseError(value, command);
-    return value;
+    const isSuccess = this.protocol.checkResponseError(response, command);
+    return {response, isSuccess};
   }
 
   private async readResponse(): Promise<Uint8Array> {
@@ -159,7 +159,10 @@ export class TouController {
   }
 
   public async readSerialNumber(): Promise<SerialNumberData> {
-    const response = await this.sendCommand(0x01);
+    const {response, isSuccess} = await this.sendCommand(0x01);
+    if (!isSuccess) {
+      throw new Error("Ошибка при чтении серийного номера");
+    }
     const parsed = this.protocol.parseSerialNumber(response);
 
     this.deviceAddress = parsed.deviceAddress as DeviceAddress;
@@ -168,14 +171,20 @@ export class TouController {
   }
 
   public async readDeviceType(): Promise<DeviceTypeData> {
-    const response = await this.sendCommand(0x03);
+    const {response, isSuccess} = await this.sendCommand(0x03);
+    if (!isSuccess) {
+      throw new Error("Ошибка при чтении типа устройства");
+    }
     const parsed = this.protocol.parseDeviceType(response);
 
     return parsed;
   }
 
   public async readOperTime(): Promise<OperTimeData> {
-    const response = await this.sendCommand(0x4);
+    const {response, isSuccess} = await this.sendCommand(0x4);
+    if (!isSuccess) {
+      throw new Error("Ошибка при чтении времени работы");
+    }
     const parsed = this.protocol.parseOperTime(response);
 
     return parsed;
@@ -198,20 +207,29 @@ export class TouController {
     const tzBytes = [tzValue & 0xff, (tzValue >> 8) & 0xff];
     const data: number[] = [year - 2000, month, day, hour, minute, second, ...tzBytes];
 
-    const response = await this.sendCommand(0x5, data);
+    const {response, isSuccess} = await this.sendCommand(0x5, data);
+    if (!isSuccess) {
+      throw new Error("Ошибка при установке времени");
+    }
 
     return response;
   }
 
   public async readTime(): Promise<TimeData> {
-    const response = await this.sendCommand(0x6);
+    const {response, isSuccess} = await this.sendCommand(0x6);
+    if (!isSuccess) {
+      throw new Error("Ошибка при чтении времени");
+    }
     const parsed = this.protocol.parseTime(response);
 
     return parsed;
   }
 
   public async readSettingsSV(): Promise<SettingsSVData> {
-    const response = await this.sendCommand(0x42);
+    const {response, isSuccess} = await this.sendCommand(0x42);
+    if (!isSuccess) {
+      throw new Error("Ошибка при чтении настроек SV");
+    }
     const parsed = this.protocol.parseSettingsSV(response);
 
     return parsed;
@@ -219,38 +237,50 @@ export class TouController {
 
   public async recordMacConnected(
     macAddress: number[]
-  ): Promise<Uint8Array> {
-    const response = await this.sendCommand(0x41, macAddress);
+  ): Promise<{ rawResponse: Uint8Array; isSuccess: boolean }  > {
+    const {response, isSuccess} = await this.sendCommand(0x41, macAddress);
+    if (!isSuccess) {
+      throw new Error("Ошибка при записи MAC-адреса подключенного устройства");
+    }
 
-    return response;
+    return {rawResponse: response, isSuccess};
   }
 
   public async readIdSV(): Promise<IdSVData> {
-    const response = await this.sendCommand(0x43);
+    const {response, isSuccess} = await this.sendCommand(0x43);
+    if (!isSuccess) {
+      throw new Error("Ошибка при чтении ID SV");
+    }
     const parsed = this.protocol.parseIdSV(response);
 
     return parsed;
   }
 
-  public async recordIdSV(nameTou: string): Promise<Uint8Array> {
+  public async recordIdSV(nameTou: string): Promise<{ rawResponse: Uint8Array; isSuccess: boolean }> {
     let nameBytes: number[] = [];
     for (let i = 0; i < nameTou.length; i++) {
       nameBytes[i] = nameTou.charCodeAt(i);
     }
 
-    const response = await this.sendCommand(0x44, nameBytes);
+    const {response, isSuccess} = await this.sendCommand(0x44, nameBytes);
+    if (!isSuccess) {
+      throw new Error("Ошибка при записи ID SV");
+    }
 
-    return response;
+    return { rawResponse: response, isSuccess };
   }
 
   public async readIdVlan(): Promise<IdVlanData> {
-    const response = await this.sendCommand(0x45);
+    const {response, isSuccess} = await this.sendCommand(0x45);
+    if (!isSuccess) {
+      throw new Error("Ошибка при чтении ID VLAN");
+    }
     const parsed = this.protocol.parseIdVlan(response);
 
     return parsed;
   }
 
-  public async recordIdVlan(idVlan: number): Promise<Uint8Array> {
+  public async recordIdVlan(idVlan: number): Promise<{ rawResponse: Uint8Array; isSuccess: boolean }> {
     if (idVlan < 0 || idVlan > 4095) {
         throw new Error("VLAN ID должен быть от 0 до 4095");
     }
@@ -258,8 +288,11 @@ export class TouController {
     const idVlanBytes: number[] = [idVlan & 0xFF, (idVlan >> 8) & 0xFF]; 
     console.log(`Устанавливаем VLAN ID: ${idVlan}, байты:`, idVlanBytes.map(b => '0x' + b.toString(16)));
     
-    const response = await this.sendCommand(0x4A, idVlanBytes);
+    const {response, isSuccess} = await this.sendCommand(0x4A, idVlanBytes);
+    if (!isSuccess) {
+      throw new Error("Ошибка при записи ID VLAN");
+    }
 
-    return response;
+    return { rawResponse: response, isSuccess };
   }
 }
