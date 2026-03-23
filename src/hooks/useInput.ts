@@ -4,23 +4,32 @@ interface UseVlanInputPops {
   newMacAddress: string;
   isErrorMac: boolean;
   errorMessageMac: string;
-  newIdVlan: string;
-  newIdSV: string;
-  validMacAddress: (value: string) => void;
+  validMacAddress: (value: string) => boolean;
   handleChangeMacAddress: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleChangeIdVlan: (event: React.ChangeEvent<HTMLInputElement>) => void;
+
+  newIdSV: string;
+  isErrorIdSV: boolean;
+  errorMessageIdSV: string;
+  validIdSV: (value: string) => boolean;
   handleChangeIdSV: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  resetMacAddress: () => void;
-  resetIdVlan: () => void;
-  resetIdSV: () => void;
+
+  newIdVlan: string;
+  isErrorIdVlan: boolean;
+  errorMessageIdVlan: string;
+  validIdVlan: (value: string) => boolean;
+  handleChangeIdVlan: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function useInput(): UseVlanInputPops {
   const [newMacAddress, setNewMacAddress] = useState('');
   const [isErrorMac, setIsErrorMac] = useState(false);
   const [errorMessageMac, setErrorMessageMac] = useState('');
-  const [newIdVlan, setNewIdVlan] = useState('');
   const [newIdSV, setNewIdSV] = useState('');
+  const [isErrorIdSV, setIsErrorIdSV] = useState(false);
+  const [errorMessageIdSV, setErrorMessageIdSV] = useState('');
+  const [newIdVlan, setNewIdVlan] = useState('');
+  const [isErrorIdVlan, setIsErrorIdVlan] = useState(false);
+  const [errorMessageIdVlan, setErrorMessageIdVlan] = useState('');
 
   // MAC-address
   function validMacAddress(value: string) {
@@ -29,62 +38,115 @@ export function useInput(): UseVlanInputPops {
     if (value === '') {
       setIsErrorMac(true);
       setErrorMessageMac("MAC-адрес не может быть пустым");
-    } else if (clean.length !== 12) {
+      return false;
+    } 
+    else if (clean.length !== 12) {
       setIsErrorMac(true);
       setErrorMessageMac("MAC-адрес должен содержать 12 символов");
-    } else if (!/^[0-9A-Fa-f]{12}$/.test(clean)) {
+      return false;
+    } 
+    else if (!/^[0-9A-Fa-f]{12}$/.test(clean)) {
       setIsErrorMac(true);
       setErrorMessageMac("Только hex символы (0-9, A-F)");
-    } else {
+      return false;
+    } 
+    else {
       setIsErrorMac(false);
       setErrorMessageMac("");
+      return true;
     }
   }
 
   const handleChangeMacAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let value = event.target.value;
+    const value = event.target.value;
     setNewMacAddress(value);
     if (value === '') {
       setIsErrorMac(false);
     }
   }
 
-  const resetMacAddress = () => {
-    setNewMacAddress('');
-  }
-
   // SV ID
-  const handleChangeIdSV = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setNewIdSV(value);
+  function validIdSV(value: string) {
+    if (value === '') {
+      setIsErrorIdSV(true);
+      setErrorMessageIdSV("SV ID не может быть пустым");
+      return false;
+    } 
+    else if (value.length > 12) {
+      setIsErrorIdSV(true);
+      setErrorMessageIdSV("SV ID не должен превышать 12 символов");
+      return false;
+    } 
+    else {
+      setIsErrorIdSV(false);
+      setErrorMessageIdSV("");
+      return true;
+    }
   }
 
-  const resetIdSV = () => {
-    setNewIdSV('');
+  const handleChangeIdSV = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.replace(/\s+/g, '');
+    setNewIdSV(value);
+    if (value === '') {
+      setIsErrorIdSV(false);
+    }
   }
 
   // Vlan ID
-  const handleChangeIdVlan = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setNewIdVlan(value);
+  function validIdVlan(value: string): boolean {
+    if (value === '') {
+      setIsErrorIdVlan(true);
+      setErrorMessageIdVlan("Vlan ID не может быть пустым");
+      return false;
+    } 
+    else if (!/^\d+$/.test(value)) {
+      setIsErrorIdVlan(true);
+      setErrorMessageIdVlan("Vlan ID может содержать только числа");
+      return false;
+    } 
+    else if (value.length > 4) {
+      setIsErrorIdVlan(true);
+      setErrorMessageIdVlan("Vlan ID не должен превышать 4 символов");
+      return false;
+    } 
+    else if (+value > 4095 || +value < 0) {
+      setIsErrorIdVlan(true);
+      setErrorMessageIdVlan("Vlan ID должен быть в диапазоне от 0 до 4095");
+      return false;
+    } 
+    else {
+      setIsErrorIdVlan(false);
+      setErrorMessageIdVlan("");
+      return true;
+    }
   }
 
-  const resetIdVlan = () => {
-    setNewIdVlan('');
+  const handleChangeIdVlan = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let value = event.target.value.replace(/[^0-9]/g, '');
+    if (+value > 4095) {
+      value = '4095';
+    }
+    setNewIdVlan(value);
+    if (value === '') {
+      setIsErrorIdVlan(false);
+    }
   }
 
   return {
     newMacAddress,
     isErrorMac,
     errorMessageMac,
-    newIdVlan,
-    newIdSV,
     validMacAddress,
     handleChangeMacAddress,
-    handleChangeIdVlan,
+    newIdSV,
+    isErrorIdSV,
+    errorMessageIdSV,
+    validIdSV,
     handleChangeIdSV,
-    resetMacAddress,
-    resetIdVlan,
-    resetIdSV,
+    newIdVlan,
+    isErrorIdVlan,
+    errorMessageIdVlan,
+    validIdVlan,
+    handleChangeIdVlan,
   };
 }

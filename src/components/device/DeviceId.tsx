@@ -1,4 +1,4 @@
-import { Button, Input, Table } from "@chakra-ui/react";
+import { Button, Field, Input, Table } from "@chakra-ui/react";
 import { useInput } from "../../hooks/useInput";
 
 interface DeviceIdPops {
@@ -9,16 +9,33 @@ interface DeviceIdPops {
 }
 
 export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
-  const {newIdVlan, newIdSV, handleChangeIdVlan, handleChangeIdSV, resetIdVlan, resetIdSV} = useInput();
-
-  const handleSaveIdVlan = () => {
-    onIdVlan(Number(newIdVlan));
-    resetIdVlan();
-  }
+  const { 
+    newIdSV, 
+    isErrorIdSV,
+    errorMessageIdSV,
+    validIdSV,
+    handleChangeIdSV,  
+    newIdVlan, 
+    isErrorIdVlan,
+    errorMessageIdVlan,
+    validIdVlan,
+    handleChangeIdVlan
+  } = useInput();
 
   const handleSaveIdSV = () => {
-    onIdSV(newIdSV);
-    resetIdSV();
+    const cleanIdSV = newIdSV.replace(/\s+/g, '');
+    const isValid = validIdSV(cleanIdSV);
+    if (!isErrorIdSV && isValid && cleanIdSV.length <= 12) {
+      onIdSV(cleanIdSV);
+    }
+  }
+
+  const handleSaveIdVlan = () => {
+    const cleanIdVlan = newIdVlan.replace(/[^0-9]/g, '');
+    const isValid = validIdVlan(cleanIdVlan);
+    if (!isErrorIdVlan && isValid) {
+      onIdVlan(Number(cleanIdVlan));
+    }
   }
 
   return (
@@ -35,11 +52,15 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
           <Table.Cell>SV ID устройства</Table.Cell>
           <Table.Cell>{idSV || "—"}</Table.Cell>
           <Table.Cell>
-            <Input 
-              type="text"
-              value={newIdSV}
-              onChange={handleChangeIdSV}
-            />
+            <Field.Root invalid={isErrorIdSV}>
+              <Input 
+                type="text"
+                value={newIdSV}
+                onChange={handleChangeIdSV}
+                maxLength={12}
+              />
+              {isErrorIdSV && <Field.ErrorText>{errorMessageIdSV}</Field.ErrorText>}
+            </Field.Root>
           </Table.Cell>
           <Table.Cell textAlign="end">
             <Button onClick={handleSaveIdSV}>
@@ -51,13 +72,16 @@ export function DeviceId({idSV, idVlan, onIdVlan, onIdSV}: DeviceIdPops) {
           <Table.Cell>Vlan ID устройства</Table.Cell>
           <Table.Cell>{idVlan || "—"}</Table.Cell>
           <Table.Cell>
-            <Input 
-              type="text"
-              value={newIdVlan}
-              onChange={handleChangeIdVlan}
-              placeholder="0 - 4095" 
-              maxLength={4}
-            />
+            <Field.Root invalid={isErrorIdVlan}>
+              <Input 
+                type="text"
+                value={newIdVlan}
+                onChange={handleChangeIdVlan}
+                placeholder="0 - 4095" 
+                maxLength={4}
+              />
+              {isErrorIdVlan && <Field.ErrorText>{errorMessageIdVlan}</Field.ErrorText>}
+            </Field.Root>
           </Table.Cell>
           <Table.Cell textAlign="end">
             <Button onClick={handleSaveIdVlan}>
