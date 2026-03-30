@@ -1,7 +1,7 @@
 import { Table, Input, Button, VStack, Field, Tooltip } from "@chakra-ui/react";
 import { withMask } from "use-mask-input";
-import { useInput } from "../../hooks/useInput";
 import { toaster } from "../ui/toaster";
+import { useMacAddress } from "../../hooks/useMacAddress";
 
 interface MacAddressItem {
   name: string,
@@ -22,7 +22,7 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
     errorMessageMac, 
     validMacAddress, 
     handleChangeMacAddress
-  } = useInput();
+  } = useMacAddress();
 
   // 01:0C:CD:04:00:01
   function macToArray(macString: string): number[] {

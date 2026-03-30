@@ -1,12 +1,6 @@
 import { useState } from "react";
 
-interface UseVlanInputPops {
-  newMacAddress: string;
-  isErrorMac: boolean;
-  errorMessageMac: string;
-  validMacAddress: (value: string) => boolean;
-  handleChangeMacAddress: (event: React.ChangeEvent<HTMLInputElement>) => void;
-
+interface UseDeviceIdPops {
   newIdSV: string;
   isErrorIdSV: boolean;
   errorMessageIdSV: string;
@@ -20,50 +14,13 @@ interface UseVlanInputPops {
   handleChangeIdVlan: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function useInput(): UseVlanInputPops {
-  const [newMacAddress, setNewMacAddress] = useState('');
-  const [isErrorMac, setIsErrorMac] = useState(false);
-  const [errorMessageMac, setErrorMessageMac] = useState('');
+export function useDeviceId(): UseDeviceIdPops {
   const [newIdSV, setNewIdSV] = useState('');
   const [isErrorIdSV, setIsErrorIdSV] = useState(false);
   const [errorMessageIdSV, setErrorMessageIdSV] = useState('');
   const [newIdVlan, setNewIdVlan] = useState('');
   const [isErrorIdVlan, setIsErrorIdVlan] = useState(false);
   const [errorMessageIdVlan, setErrorMessageIdVlan] = useState('');
-
-  // MAC-address
-  function validMacAddress(value: string) {
-    const clean = value.replace(/[:\-]/g, '');
-
-    if (value === '') {
-      setIsErrorMac(true);
-      setErrorMessageMac("MAC-адрес не может быть пустым");
-      return false;
-    } 
-    else if (clean.length !== 12) {
-      setIsErrorMac(true);
-      setErrorMessageMac("MAC-адрес должен содержать 12 символов");
-      return false;
-    } 
-    else if (!/^[0-9A-Fa-f]{12}$/.test(clean)) {
-      setIsErrorMac(true);
-      setErrorMessageMac("Только hex символы (0-9, A-F)");
-      return false;
-    } 
-    else {
-      setIsErrorMac(false);
-      setErrorMessageMac("");
-      return true;
-    }
-  }
-
-  const handleChangeMacAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
-    setNewMacAddress(value);
-    if (value === '') {
-      setIsErrorMac(false);
-    }
-  }
 
   // SV ID
   function validIdSV(value: string) {
@@ -133,11 +90,6 @@ export function useInput(): UseVlanInputPops {
   }
 
   return {
-    newMacAddress,
-    isErrorMac,
-    errorMessageMac,
-    validMacAddress,
-    handleChangeMacAddress,
     newIdSV,
     isErrorIdSV,
     errorMessageIdSV,

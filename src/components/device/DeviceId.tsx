@@ -1,5 +1,5 @@
 import { Button, Field, Input, Table } from "@chakra-ui/react";
-import { useInput } from "../../hooks/useInput";
+import { useDeviceId } from "../../hooks/useDeviceId";
 import { toaster } from "../ui/toaster";
 
 interface DeviceIdPops {
@@ -24,7 +24,7 @@ export function DeviceId({connected, idSV, idVlan, successIdSV, successIdVlan, o
     errorMessageIdVlan,
     validIdVlan,
     handleChangeIdVlan
-  } = useInput();
+  } = useDeviceId();
 
   const handleSaveIdSV = async () => {
     const cleanIdSV = newIdSV.replace(/\s+/g, '');
