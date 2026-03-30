@@ -9,24 +9,13 @@ interface MacAddressItem {
 }
 
 interface MacAddressProps {
+  connected: boolean;
   macAddress: MacAddressItem[];
   successMacAddress: boolean;
   onMacAddress: (macAddress: number[]) => Promise<void>;
 }
 
-// 01:0C:CD:04:00:01
-function macToArray(macString: string): number[] {
-  const cleanMac = macString.replace(/[:\-\s]/g, '');
-
-  const macArray = [];
-  for (let i = 0; i < cleanMac.length; i+=2) {
-    macArray.push(parseInt(cleanMac.slice(i,i+2), 16));
-  }
-
-  return macArray;
-}
-
-export function MacAddressDevices({macAddress, successMacAddress, onMacAddress}: MacAddressProps) {
+export function MacAddressDevices({connected, macAddress, successMacAddress, onMacAddress}: MacAddressProps) {
   const {
     newMacAddress, 
     isErrorMac, 
@@ -34,6 +23,18 @@ export function MacAddressDevices({macAddress, successMacAddress, onMacAddress}:
     validMacAddress, 
     handleChangeMacAddress
   } = useInput();
+
+  // 01:0C:CD:04:00:01
+  function macToArray(macString: string): number[] {
+    const cleanMac = macString.replace(/[:\-\s]/g, '');
+
+    const macArray = [];
+    for (let i = 0; i < cleanMac.length; i+=2) {
+      macArray.push(parseInt(cleanMac.slice(i,i+2), 16));
+    }
+
+    return macArray;
+  }
 
   const handleSaveMacAddress = async () => {
     const cleanMac = newMacAddress.replace(/[^0-9A-Za-z]/g, '');
@@ -45,7 +46,17 @@ export function MacAddressDevices({macAddress, successMacAddress, onMacAddress}:
           description: "MAC-адрес успешно записан",
           type: "success",
         });
+      } else {
+        toaster.create({
+          description: "Ошибка при записи MAC-адреса",
+          type: "error",
+        });
       }
+    } else {
+      toaster.create({
+        description: errorMessageMac || "Неверный MAC-адрес",
+        type: "error",
+      });
     }
 
   }
@@ -82,7 +93,7 @@ export function MacAddressDevices({macAddress, successMacAddress, onMacAddress}:
                 ref={withMask("**:**:**:**:**:**")}
               >
               </Input>
-              {isErrorMac && <Field.ErrorText>{errorMessageMac}</Field.ErrorText>}
+              {/* {isErrorMac && <Field.ErrorText>{errorMessageMac}</Field.ErrorText>} */}
               </Field.Root>
             </Table.Cell>
           </Table.Row>
@@ -91,13 +102,13 @@ export function MacAddressDevices({macAddress, successMacAddress, onMacAddress}:
       </Table.Root>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <Button onClick={handleSaveMacAddress}>
+          <Button onClick={handleSaveMacAddress} disabled={!connected}>
             Записать
           </Button>
         </Tooltip.Trigger>
-        <Tooltip.Content>
+        {/* <Tooltip.Content>
           MAC-адрес должен быть в формате 01:0C:CD:04:XX:XX для корректной работы
-        </Tooltip.Content>
+        </Tooltip.Content> */}
       </Tooltip.Root>
     </VStack>
   )

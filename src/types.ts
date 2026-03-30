@@ -2,6 +2,11 @@ export type DeviceAddress = [number, number, number];
 
 export type RawResponse = Uint8Array | number[];
 
+export interface SuccessResponse {
+  rawResponse: RawResponse;
+  isSuccess: boolean;
+}
+
 export interface SerialNumberData {
   deviceAddress: DeviceAddress;
   serialNumber: number;

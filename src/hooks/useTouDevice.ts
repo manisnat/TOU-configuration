@@ -4,12 +4,14 @@ import { TouProtocol } from "../TouProtocol";
 
 export function useTouDevice() {
   const [tou] = useState(new TouController(TouProtocol));
+  const [connected, setConnected] = useState(false);
   const [serialNumber, setSerialNumber] = useState("");
   const [deviceType, setDeviceType] = useState("");
   const [mainSoftware, setMainSoftware] = useState("");
   const [additionalSoftware, setAdditionalSoftware] = useState("");
   const [operTime, setOperTime] = useState("");
   const [currentTime, setCurrentTime] = useState("");
+  const [successTime, setSuccessTime] = useState(false);
   const [macAddressTou, setMacAddressTou] = useState("");
   const [successMacAddress, setSuccessMacAddress] = useState(false);
   const [macAddressConnected, setMacAddressConnected] = useState("");
@@ -32,11 +34,10 @@ export function useTouDevice() {
       await readOperTimeFunc();
       await readTimeFunc();
       await readSettingsSVFunc();
-      //await recordMacConnectedFunc();
       await readIdSVFunc();
-      //await recordIdSVFunc();
       await readIdVlanFunc();
-      //await recordIdVlanFunc();
+
+      setConnected(true);
     } catch (error) {
       console.log("Ошибка: " + (error as Error).message);
     }
@@ -46,6 +47,8 @@ export function useTouDevice() {
     try {
       const result = await tou.disconnect();
       console.log(result);
+
+      setConnected(false);
     } catch (error) {
       console.log("Ошибка: " + (error as Error).message);
     }
@@ -126,7 +129,7 @@ export function useTouDevice() {
       //   2026, 2, 25, 10, 10, 23, 700,
       // ];
 
-      const rawResponse = await tou.setTime(
+      const {rawResponse, isSuccess} = await tou.setTime(
         year,
         month,
         day,
@@ -140,6 +143,7 @@ export function useTouDevice() {
       console.log(`Ответ установки времени: ${TouProtocol.formatPacket(bytes)}`);
       console.log("Поменяли время в ТОУ");
       await readTimeFunc();
+      setSuccessTime(isSuccess);
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }
@@ -275,15 +279,18 @@ export function useTouDevice() {
   ]
 
   return {
+    connected,
     stats,
     macAddress,
     successMacAddress,
+    successTime,
     idSV,
     successIdSV,
     idVlan,
     successIdVlan,
     connectFunc,
     disconnectFunc,
+    readOperTimeFunc,
     setTimeFunc,
     readTimeFunc,
     recordMacConnectedFunc,

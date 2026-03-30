@@ -1,7 +1,10 @@
 import { DatePicker, parseDate, HStack, VStack, Select, Portal, createListCollection, Text, Button, type DateValue } from "@chakra-ui/react"
 import { useDate } from "../../hooks/useDate"
+import { toaster } from "../ui/toaster";
 
 interface CalendarPops {
+  connected: boolean;
+  successTime: boolean;
   onTime: (
     year: number, 
     month: number, 
@@ -13,8 +16,8 @@ interface CalendarPops {
   ) => Promise<void>;
 }
 
-export function Calendar({onTime}: CalendarPops) {
-  const { dateValue, year, month, day, hours, minutes, seconds, timezone, handleDateValue, handleHours, handleMinutes, handleSeconds, handleTimezone } = useDate();
+export function Calendar({connected, successTime, onTime}: CalendarPops) {
+  const { dateValue, isErrorDate, errorMessageDate, year, month, day, hours, minutes, seconds, timezone, validDate, handleDateValue, handleHours, handleMinutes, handleSeconds, handleTimezone } = useDate();
 
   const hourCollection = createListCollection({
     items: Array.from({ length: 24 }, (_, i) => ({
@@ -95,7 +98,56 @@ export function Calendar({onTime}: CalendarPops) {
   };
 
   const handleSaveDate = async () => {
-    await onTime(year, month, day, +hours, +minutes, +seconds, +timezone);
+    if (validDate(dateValue) && !isErrorDate) {
+      await onTime(year, month, day, +hours, +minutes, +seconds, +timezone);
+      if (successTime) {
+        toaster.create({
+          description: "Время успешно записано",
+          type: "success",
+        });
+      }
+    } else if (isErrorDate) {
+      toaster.create({
+        description: errorMessageDate,
+        type: "error",
+      });
+    } else {
+      toaster.create({
+        description: "Ошибка при записи времени",
+        type: "error",
+      });
+    }
+  }
+
+  const handleSaveCurrentTime = async () => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; 
+    const currentDay = now.getDate();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentSecond = now.getSeconds();
+
+    // Получаем смещение часового пояса в минутах и преобразуем его в формат ±HHMM
+    const timezoneOffset = -now.getTimezoneOffset(); // количество минут, которое нужно добавить к местному времени для получения UTC
+    const tzSign = timezoneOffset >= 0 ? "+" : "-";
+    const tzHours = Math.floor(Math.abs(timezoneOffset) / 60).toString().padStart(2, '0');
+    const tzMinutes = (Math.abs(timezoneOffset) % 60).toString().padStart(2, '0');
+    const tzValue = `${tzSign}${tzHours}${tzMinutes}`;
+
+    await onTime(currentYear, currentMonth, currentDay, currentHour, currentMinute, currentSecond, +tzValue);
+    if (successTime) {
+      toaster.create({
+        description: "Текущее время успешно записано",
+        type: "success",
+      });
+    } else {
+      toaster.create({
+        description: "Ошибка при записи времени",
+        type: "error",
+      });
+    }
+
   }
 
   return (
@@ -264,9 +316,14 @@ export function Calendar({onTime}: CalendarPops) {
           </Portal>
         </Select.Root>
       </VStack>
-      <Button onClick={handleSaveDate}>
-        Записать время
-      </Button>
+      <VStack>
+        <Button onClick={handleSaveDate} disabled={!connected}>
+          Записать время
+        </Button>
+        <Button onClick={handleSaveCurrentTime} disabled={!connected}>
+          Записать время из текущей системы
+        </Button>
+      </VStack>
     </VStack>
   )
 }

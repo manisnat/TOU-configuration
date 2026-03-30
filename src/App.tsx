@@ -9,15 +9,19 @@ import { Toaster } from "./components/ui/toaster";
 import { Calendar } from "./components/device/Calendar";
 
 function App() {  
-  const {stats,
+  const {
+    connected,
+    stats,
     macAddress,
     successMacAddress,
+    successTime,
     idSV,
     successIdSV,
     idVlan,
     successIdVlan,
     connectFunc,
     disconnectFunc,
+    readOperTimeFunc,
     setTimeFunc,
     readTimeFunc,
     recordMacConnectedFunc,
@@ -32,19 +36,41 @@ function App() {
       <Toaster />
 
       <DeviceControls
+        connected={connected}
         onConnect={connectFunc}
         onDisconnect={disconnectFunc}
-        onRefreshTime={readTimeFunc}
       />
 
       <HStack gap={20}>
-        <DeviceStats stats={stats} />
+        <DeviceStats 
+          connected={connected}
+          stats={stats} 
+          onRefreshTime={readTimeFunc}
+          onRefreshOperTime={readOperTimeFunc}
+        />
         <VStack gap={10}>
-          <DeviceId idSV={idSV} idVlan={idVlan} successIdSV={successIdSV} successIdVlan={successIdVlan} onIdVlan={recordIdVlanFunc} onIdSV={recordIdSVFunc}/>
-          <MacAddressDevices macAddress={macAddress} successMacAddress={successMacAddress} onMacAddress={recordMacConnectedFunc}/>
+          <DeviceId 
+            connected={connected} 
+            idSV={idSV} 
+            idVlan={idVlan} 
+            successIdSV={successIdSV} 
+            successIdVlan={successIdVlan} 
+            onIdVlan={recordIdVlanFunc} 
+            onIdSV={recordIdSVFunc}
+          />
+          <MacAddressDevices 
+            connected={connected} 
+            macAddress={macAddress} 
+            successMacAddress={successMacAddress} 
+            onMacAddress={recordMacConnectedFunc}
+          />
         </VStack>
         
-        <Calendar onTime={setTimeFunc}/>
+        <Calendar 
+          connected={connected} 
+          successTime={successTime} 
+          onTime={setTimeFunc}
+        />
       </HStack>
 
       

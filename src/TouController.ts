@@ -2,6 +2,7 @@ import { TouProtocol} from './TouProtocol';
 import type {
   DeviceAddress, 
   SerialNumberData, 
+  SuccessResponse,
   DeviceTypeData, 
   OperTimeData, 
   TimeData,
@@ -198,7 +199,7 @@ export class TouController {
     minute: number, 
     second: number, 
     timezone: number
-  ): Promise<Uint8Array> {
+  ): Promise<SuccessResponse> {
     let tzValue = timezone;
     if (tzValue < 0) {
       tzValue = 65536 + tzValue; // для отрицательных значений
@@ -212,7 +213,7 @@ export class TouController {
       throw new Error("Ошибка при установке времени");
     }
 
-    return response;
+    return {rawResponse: response, isSuccess};
   }
 
   public async readTime(): Promise<TimeData> {
@@ -237,7 +238,7 @@ export class TouController {
 
   public async recordMacConnected(
     macAddress: number[]
-  ): Promise<{ rawResponse: Uint8Array; isSuccess: boolean }  > {
+  ): Promise<SuccessResponse> {
     const {response, isSuccess} = await this.sendCommand(0x41, macAddress);
     if (!isSuccess) {
       throw new Error("Ошибка при записи MAC-адреса подключенного устройства");
@@ -256,7 +257,7 @@ export class TouController {
     return parsed;
   }
 
-  public async recordIdSV(nameTou: string): Promise<{ rawResponse: Uint8Array; isSuccess: boolean }> {
+  public async recordIdSV(nameTou: string): Promise<SuccessResponse> {
     let nameBytes: number[] = [];
     for (let i = 0; i < nameTou.length; i++) {
       nameBytes[i] = nameTou.charCodeAt(i);
@@ -280,7 +281,7 @@ export class TouController {
     return parsed;
   }
 
-  public async recordIdVlan(idVlan: number): Promise<{ rawResponse: Uint8Array; isSuccess: boolean }> {
+  public async recordIdVlan(idVlan: number): Promise<SuccessResponse> {
     if (idVlan < 0 || idVlan > 4095) {
         throw new Error("VLAN ID должен быть от 0 до 4095");
     }

@@ -3,6 +3,7 @@ import { useInput } from "../../hooks/useInput";
 import { toaster } from "../ui/toaster";
 
 interface DeviceIdPops {
+  connected: boolean;
   idSV: string,
   idVlan: string,
   successIdSV: boolean;
@@ -11,7 +12,7 @@ interface DeviceIdPops {
   onIdSV: (idSV: string) => Promise<void>;
 }
 
-export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, onIdSV}: DeviceIdPops) {
+export function DeviceId({connected, idSV, idVlan, successIdSV, successIdVlan, onIdVlan, onIdSV}: DeviceIdPops) {
   const { 
     newIdSV, 
     isErrorIdSV,
@@ -35,7 +36,17 @@ export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, on
           description: "SV id успешно записан",
           type: "success",
         });
+      } else {
+        toaster.create({
+          description: "Ошибка при записи SV id",
+          type: "error",
+        });
       }
+    } else {
+      toaster.create({
+        description: errorMessageIdSV || "Неверный SV id",
+        type: "error",
+      });
     }
   }
 
@@ -49,8 +60,19 @@ export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, on
           description: "Vlan id успешно записан",
           type: "success",
         });
+      } else {
+        toaster.create({
+          description: "Ошибка при записи Vlan id",
+          type: "error",
+        });
       }
+    } else {
+      toaster.create({
+        description: errorMessageIdVlan || "Неверный Vlan id",
+        type: "error",
+      });
     }
+
   }
 
   return (
@@ -74,11 +96,11 @@ export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, on
                 onChange={handleChangeIdSV}
                 maxLength={12}
               />
-              {isErrorIdSV && <Field.ErrorText>{errorMessageIdSV}</Field.ErrorText>}
+              {/* {isErrorIdSV && <Field.ErrorText>{errorMessageIdSV}</Field.ErrorText>} */}
             </Field.Root>
           </Table.Cell>
           <Table.Cell textAlign="end">
-            <Button onClick={handleSaveIdSV}>
+            <Button onClick={handleSaveIdSV} disabled={!connected}>
               Записать
             </Button>
           </Table.Cell>
@@ -95,11 +117,11 @@ export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, on
                 placeholder="0 - 4095" 
                 maxLength={4}
               />
-              {isErrorIdVlan && <Field.ErrorText>{errorMessageIdVlan}</Field.ErrorText>}
+              {/* {isErrorIdVlan && <Field.ErrorText>{errorMessageIdVlan}</Field.ErrorText>} */}
             </Field.Root>
           </Table.Cell>
           <Table.Cell textAlign="end">
-            <Button onClick={handleSaveIdVlan}>
+            <Button onClick={handleSaveIdVlan} disabled={!connected}>
               Записать
             </Button>
           </Table.Cell>
