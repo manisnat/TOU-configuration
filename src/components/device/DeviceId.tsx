@@ -54,7 +54,7 @@ export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, on
   }
 
   return (
-    <Table.Root size="lg" interactive maxWidth="550px">
+    <Table.Root size="md" interactive maxWidth="550px">
       <Table.Header>
         <Table.Row>
           <Table.ColumnHeader></Table.ColumnHeader>

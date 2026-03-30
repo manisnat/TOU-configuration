@@ -27,24 +27,28 @@ function App() {
 
 
   return (
-    <VStack>
+    <VStack gap={5} padding={10}>
       <Header />
       <Toaster />
 
       <DeviceControls
         onConnect={connectFunc}
         onDisconnect={disconnectFunc}
-        // onSetTime={setTimeFunc}
         onRefreshTime={readTimeFunc}
       />
 
       <HStack gap={20}>
         <DeviceStats stats={stats} />
+        <VStack gap={10}>
+          <DeviceId idSV={idSV} idVlan={idVlan} successIdSV={successIdSV} successIdVlan={successIdVlan} onIdVlan={recordIdVlanFunc} onIdSV={recordIdSVFunc}/>
+          <MacAddressDevices macAddress={macAddress} successMacAddress={successMacAddress} onMacAddress={recordMacConnectedFunc}/>
+        </VStack>
+        
         <Calendar onTime={setTimeFunc}/>
       </HStack>
 
-      <MacAddressDevices macAddress={macAddress} successMacAddress={successMacAddress} onMacAddress={recordMacConnectedFunc}/>
-      <DeviceId idSV={idSV} idVlan={idVlan} successIdSV={successIdSV} successIdVlan={successIdVlan} onIdVlan={recordIdVlanFunc} onIdSV={recordIdSVFunc}/>
+      
+      
     </VStack>
   );
 }
