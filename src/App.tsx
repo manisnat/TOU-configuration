@@ -1,4 +1,4 @@
-import { VStack } from "@chakra-ui/react";
+import { HStack, VStack } from "@chakra-ui/react";
 import { Header } from "./components/layout/Header";
 import { DeviceControls } from "./components/device/DeviceControls";
 import { DeviceStats } from "./components/device/DeviceStats";
@@ -6,6 +6,7 @@ import { useTouDevice } from "./hooks/useTouDevice";
 import { MacAddressDevices } from "./components/device/MacAddress";
 import { DeviceId } from "./components/device/DeviceId";
 import { Toaster } from "./components/ui/toaster";
+import { Calendar } from "./components/device/Calendar";
 
 function App() {  
   const {stats,
@@ -33,11 +34,15 @@ function App() {
       <DeviceControls
         onConnect={connectFunc}
         onDisconnect={disconnectFunc}
-        onSetTime={setTimeFunc}
+        // onSetTime={setTimeFunc}
         onRefreshTime={readTimeFunc}
       />
 
-      <DeviceStats stats={stats} />
+      <HStack gap={20}>
+        <DeviceStats stats={stats} />
+        <Calendar onTime={setTimeFunc}/>
+      </HStack>
+
       <MacAddressDevices macAddress={macAddress} successMacAddress={successMacAddress} onMacAddress={recordMacConnectedFunc}/>
       <DeviceId idSV={idSV} idVlan={idVlan} successIdSV={successIdSV} successIdVlan={successIdVlan} onIdVlan={recordIdVlanFunc} onIdSV={recordIdSVFunc}/>
     </VStack>

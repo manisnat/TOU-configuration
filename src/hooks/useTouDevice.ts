@@ -93,7 +93,7 @@ export function useTouDevice() {
       const { dayOperTime, hourOperTime, minuteOperTime, secOperTime } =
         TouProtocol.formatOperTime(dataOperTime.operTime);
 
-      setOperTime(`${dayOperTime} дней ${hourOperTime} часов ${minuteOperTime} минут ${secOperTime} секунд`);
+      setOperTime(`${dayOperTime}д. ${hourOperTime}ч. ${minuteOperTime}мин. ${secOperTime}сек.`);
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }
@@ -106,17 +106,25 @@ export function useTouDevice() {
       const bytes = Array.from(dataTime.rawResponse as number[]);
       console.log(`Ответ чтения времени: ${TouProtocol.formatPacket(bytes)}`);
 
-      setCurrentTime(`${toStringPadStart(dataTime.yearTime, 4, "2000")}.${toStringPadStart(dataTime.monthTime, 2)}.${toStringPadStart(dataTime.dayTime, 2)} ${toStringPadStart(dataTime.hourTime, 2)}:${toStringPadStart(dataTime.minuteTime, 2)}:${toStringPadStart(dataTime.secTime, 2)}`);
+      setCurrentTime(`${toStringPadStart(dataTime.dayTime, 2)}.${toStringPadStart(dataTime.monthTime, 2)}.${toStringPadStart(dataTime.yearTime, 4, "2000")} ${toStringPadStart(dataTime.hourTime, 2)}:${toStringPadStart(dataTime.minuteTime, 2)}:${toStringPadStart(dataTime.secTime, 2)}`);
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }
   };
 
-  const setTimeFunc = async (): Promise<void> => {
+  const setTimeFunc = async (
+    year: number, 
+    month: number, 
+    day: number, 
+    hour: number, 
+    minute: number, 
+    second: number, 
+    timezone: number
+  ): Promise<void> => {
     try {
-      const [year, month, day, hour, minute, second, timezone] = [
-        2026, 2, 25, 10, 10, 23, 700,
-      ];
+      // const [year, month, day, hour, minute, second, timezone] = [
+      //   2026, 2, 25, 10, 10, 23, 700,
+      // ];
 
       const rawResponse = await tou.setTime(
         year,
@@ -131,7 +139,7 @@ export function useTouDevice() {
       const bytes = Array.from(rawResponse);
       console.log(`Ответ установки времени: ${TouProtocol.formatPacket(bytes)}`);
       console.log("Поменяли время в ТОУ");
-      readTimeFunc();
+      await readTimeFunc();
     } catch (error) {
       console.log("Не удалось прочитать: " + (error as Error).message);
     }

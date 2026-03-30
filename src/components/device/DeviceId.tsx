@@ -7,8 +7,8 @@ interface DeviceIdPops {
   idVlan: string,
   successIdSV: boolean;
   successIdVlan: boolean;
-  onIdVlan: (idVlan: number) => void;
-  onIdSV: (idSV: string) => void;
+  onIdVlan: (idVlan: number) => Promise<void>;
+  onIdSV: (idSV: string) => Promise<void>;
 }
 
 export function DeviceId({idSV, idVlan, successIdSV, successIdVlan, onIdVlan, onIdSV}: DeviceIdPops) {

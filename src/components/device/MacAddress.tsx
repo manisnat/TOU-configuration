@@ -11,7 +11,7 @@ interface MacAddressItem {
 interface MacAddressProps {
   macAddress: MacAddressItem[];
   successMacAddress: boolean;
-  onMacAddress: (macAddress: number[]) => void;
+  onMacAddress: (macAddress: number[]) => Promise<void>;
 }
 
 // 01:0C:CD:04:00:01
