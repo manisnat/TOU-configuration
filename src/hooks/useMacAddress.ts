@@ -15,21 +15,21 @@ export function useMacAddress(): UseMacAddressPops {
 
   // MAC-address
   function validMacAddress(value: string) {
-    const clean = value.replace(/[:\-]/g, '');
+    const clean = value.replace(/[:\-_]/g, '');
 
     if (value === '') {
       setIsErrorMac(true);
       setErrorMessageMac("MAC-адрес не может быть пустым");
       return false;
     } 
+    else if (!/^[0-9A-Fa-f]*$/.test(clean)) {
+      setIsErrorMac(true);
+      setErrorMessageMac("Только hex символы (0-9, A-F)");
+      return false;
+    } 
     else if (clean.length !== 12) {
       setIsErrorMac(true);
       setErrorMessageMac("MAC-адрес должен содержать 12 символов");
-      return false;
-    } 
-    else if (!/^[0-9A-Fa-f]{12}$/.test(clean)) {
-      setIsErrorMac(true);
-      setErrorMessageMac("Только hex символы (0-9, A-F)");
       return false;
     } 
     else {
@@ -41,10 +41,8 @@ export function useMacAddress(): UseMacAddressPops {
 
   const handleChangeMacAddress = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
+    validMacAddress(value);
     setNewMacAddress(value);
-    if (value === '') {
-      setIsErrorMac(false);
-    }
   }
 
   return {

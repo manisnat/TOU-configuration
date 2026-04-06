@@ -39,7 +39,15 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
   const handleSaveMacAddress = async () => {
     const cleanMac = newMacAddress.replace(/[^0-9A-Za-z]/g, '');
     const isValid = validMacAddress(cleanMac);
-    if (!isErrorMac && isValid) {
+
+    if (cleanMac == "") {
+      toaster.create({
+        description: "MAC-адрес не может быть пустым",
+        type: "error",
+      });
+    }
+
+    else if (!isErrorMac && isValid) {
       await onMacAddress(macToArray(newMacAddress));
       if (successMacAddress) {
         toaster.create({
@@ -52,13 +60,7 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
           type: "error",
         });
       }
-    } else {
-      toaster.create({
-        description: errorMessageMac || "Неверный MAC-адрес",
-        type: "error",
-      });
     }
-
   }
 
   return (
@@ -93,7 +95,10 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
                 ref={withMask("**:**:**:**:**:**")}
               >
               </Input>
-              {/* {isErrorMac && <Field.ErrorText>{errorMessageMac}</Field.ErrorText>} */}
+              {isErrorMac && <Field.ErrorText>{errorMessageMac}</Field.ErrorText>}
+              <Field.HelperText fontSize="xs" color="gray.500">
+                Формат: 01:0C:CD:04:XX:XX
+              </Field.HelperText>
               </Field.Root>
             </Table.Cell>
           </Table.Row>
@@ -102,13 +107,13 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
       </Table.Root>
       <Tooltip.Root>
         <Tooltip.Trigger asChild>
-          <Button onClick={handleSaveMacAddress} disabled={!connected}>
+          <Button 
+            onClick={handleSaveMacAddress} 
+            disabled={!connected || isErrorMac}
+          >
             Записать
           </Button>
         </Tooltip.Trigger>
-        {/* <Tooltip.Content>
-          MAC-адрес должен быть в формате 01:0C:CD:04:XX:XX для корректной работы
-        </Tooltip.Content> */}
       </Tooltip.Root>
     </VStack>
   )

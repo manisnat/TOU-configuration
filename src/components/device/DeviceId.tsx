@@ -1,79 +1,118 @@
 import { Button, Field, Input, Table } from "@chakra-ui/react";
-import { useDeviceId } from "../../hooks/useDeviceId";
 import { toaster } from "../ui/toaster";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+const svIdSchema = z.object({
+  svId: z
+    .string()
+    .min(1, "SV ID не может быть пустым")
+    .max(12, "SV ID не должен превышать 12 символов"),
+});
+
+const vlanIdSchema = z.object({
+  vlanId: z
+    .string()
+    .min(1, "Vlan ID не может быть пустым")
+    .regex(/^\d+$/, "Vlan ID должен содержать только цифры")
+});
+
+type SvIdForm = z.infer<typeof svIdSchema>;
+type VlanIdForm = z.infer<typeof vlanIdSchema>;
 
 interface DeviceIdPops {
   connected: boolean;
-  idSV: string,
-  idVlan: string,
+  idSV: string;
+  idVlan: string;
   successIdSV: boolean;
   successIdVlan: boolean;
   onIdVlan: (idVlan: number) => Promise<void>;
   onIdSV: (idSV: string) => Promise<void>;
 }
 
-export function DeviceId({connected, idSV, idVlan, successIdSV, successIdVlan, onIdVlan, onIdSV}: DeviceIdPops) {
-  const { 
-    newIdSV, 
-    isErrorIdSV,
-    errorMessageIdSV,
-    validIdSV,
-    handleChangeIdSV,  
-    newIdVlan, 
-    isErrorIdVlan,
-    errorMessageIdVlan,
-    validIdVlan,
-    handleChangeIdVlan
-  } = useDeviceId();
+export function DeviceId({
+  connected,
+  idSV,
+  idVlan,
+  successIdSV,
+  successIdVlan,
+  onIdVlan,
+  onIdSV,
+}: DeviceIdPops) {
 
-  const handleSaveIdSV = async () => {
-    const cleanIdSV = newIdSV.replace(/\s+/g, '');
-    const isValid = validIdSV(cleanIdSV);
-    if (!isErrorIdSV && isValid && cleanIdSV.length <= 12) {
+  const {
+    register: registerSV,
+    handleSubmit: handleSubmitSV,
+    formState: { errors: svErrors },
+  } = useForm<SvIdForm>({
+    resolver: zodResolver(svIdSchema),
+    mode: "onChange",
+    defaultValues: {
+      svId: "", 
+    },
+  });
+
+  const {
+    register: registerVlan,
+    handleSubmit: handleSubmitVlan,
+    formState: { errors: vlanErrors },
+  } = useForm<VlanIdForm>({
+    resolver: zodResolver(vlanIdSchema),
+    mode: "onChange",
+    defaultValues: {
+      vlanId: "", 
+    },
+  });
+
+  // Обработчик отправки SV ID через react-hook-form
+  const onSVSubmit = async (data: SvIdForm) => {
+    const cleanIdSV = data.svId.replace(/\s+/g, "");
+
+    try {
       await onIdSV(cleanIdSV);
       if (successIdSV) {
         toaster.create({
-          description: "SV id успешно записан",
+          description: `SV ID ${cleanIdSV} успешно записан`,
           type: "success",
         });
-      } else {
-        toaster.create({
-          description: "Ошибка при записи SV id",
-          type: "error",
-        });
       }
-    } else {
+    } catch (error) {
       toaster.create({
-        description: errorMessageIdSV || "Неверный SV id",
+        description: "Ошибка при записи SV id",
         type: "error",
       });
     }
-  }
+  };
 
-  const handleSaveIdVlan = async () => {
-    const cleanIdVlan = newIdVlan.replace(/[^0-9]/g, '');
-    const isValid = validIdVlan(cleanIdVlan);
-    if (!isErrorIdVlan && isValid) {
-      await onIdVlan(Number(cleanIdVlan));
+
+  // Обработчик отправки VLAN через react-hook-form
+  const onVlanSubmit = async (data: VlanIdForm) => {
+    const vlanNumber = Number(data.vlanId);
+
+    if (vlanNumber < 0 || vlanNumber > 4095) {
+      toaster.create({
+        description: "Vlan ID должен быть от 0 до 4095",
+        type: "error",
+      });
+      return;
+    }
+
+    try {
+      await onIdVlan(vlanNumber);
       if (successIdVlan) {
         toaster.create({
-          description: "Vlan id успешно записан",
+          description: `Vlan ID ${vlanNumber} успешно записан`,
           type: "success",
         });
-      } else {
-        toaster.create({
-          description: "Ошибка при записи Vlan id",
-          type: "error",
-        });
       }
-    } else {
+    } catch (error) {
       toaster.create({
-        description: errorMessageIdVlan || "Неверный Vlan id",
+        description: "Ошибка при записи Vlan id",
         type: "error",
       });
     }
-
-  }
+  };
 
   return (
     <Table.Root size="md" interactive maxWidth="550px">
@@ -85,48 +124,59 @@ export function DeviceId({connected, idSV, idVlan, successIdSV, successIdVlan, o
         </Table.Row>
       </Table.Header>
       <Table.Body>
+        {/* SV ID */}
         <Table.Row key="SVId">
           <Table.Cell>SV ID устройства</Table.Cell>
           <Table.Cell>{idSV || "—"}</Table.Cell>
           <Table.Cell>
-            <Field.Root invalid={isErrorIdSV}>
-              <Input 
+            <Field.Root invalid={!!svErrors.svId}>
+              <Input
                 type="text"
-                value={newIdSV}
-                onChange={handleChangeIdSV}
+                {...registerSV("svId")}
                 maxLength={12}
               />
-              {/* {isErrorIdSV && <Field.ErrorText>{errorMessageIdSV}</Field.ErrorText>} */}
+              {svErrors.svId && (
+                <Field.ErrorText>{svErrors.svId.message}</Field.ErrorText>
+              )}
             </Field.Root>
           </Table.Cell>
           <Table.Cell textAlign="end">
-            <Button onClick={handleSaveIdSV} disabled={!connected}>
+            <Button 
+              onClick={handleSubmitSV(onSVSubmit)} 
+              disabled={!connected || !!svErrors.svId}
+            >
               Записать
             </Button>
           </Table.Cell>
         </Table.Row>
+
+        {/* VLAN ID */}
         <Table.Row key="VlanId">
           <Table.Cell>Vlan ID устройства</Table.Cell>
           <Table.Cell>{idVlan || "—"}</Table.Cell>
           <Table.Cell>
-            <Field.Root invalid={isErrorIdVlan}>
-              <Input 
+            <Field.Root invalid={!!vlanErrors.vlanId}>
+              <Input
                 type="text"
-                value={newIdVlan}
-                onChange={handleChangeIdVlan}
-                placeholder="0 - 4095" 
+                {...registerVlan("vlanId")}
+                placeholder="0 - 4095"
                 maxLength={4}
               />
-              {/* {isErrorIdVlan && <Field.ErrorText>{errorMessageIdVlan}</Field.ErrorText>} */}
+              {vlanErrors.vlanId && (
+                <Field.ErrorText>{vlanErrors.vlanId.message}</Field.ErrorText>
+              )}
             </Field.Root>
           </Table.Cell>
           <Table.Cell textAlign="end">
-            <Button onClick={handleSaveIdVlan} disabled={!connected}>
+            <Button
+              onClick={handleSubmitVlan(onVlanSubmit)}
+              disabled={!connected || !!vlanErrors.vlanId}
+            >
               Записать
             </Button>
           </Table.Cell>
         </Table.Row>
       </Table.Body>
     </Table.Root>
-  )
+  );
 }
