@@ -1,4 +1,4 @@
-import { HStack, VStack } from "@chakra-ui/react";
+import { HStack, VStack, Box } from "@chakra-ui/react";
 import { Header } from "./components/layout/Header";
 import { DeviceControls } from "./components/device/DeviceControls";
 import { DeviceStats } from "./components/device/DeviceStats";
@@ -7,18 +7,11 @@ import { MacAddressDevices } from "./components/device/MacAddress";
 import { DeviceId } from "./components/device/DeviceId";
 import { Toaster } from "./components/ui/toaster";
 import { Calendar } from "./components/device/Calendar";
+import { WebSerialChecker } from "./components/transport/WebSerialChecker";
+import { ColorModeButton } from "./components/ui/color-mode";
 
 function App() {  
   const {
-    connected,
-    stats,
-    macAddress,
-    successMacAddress,
-    successTime,
-    idSV,
-    successIdSV,
-    idVlan,
-    successIdVlan,
     connectFunc,
     disconnectFunc,
     readOperTimeFunc,
@@ -31,50 +24,44 @@ function App() {
 
 
   return (
-    <VStack gap={5} padding={10}>
-      <Header />
-      <Toaster />
+    <VStack padding={2}>
+      <Box width="100%" display="flex" justifyContent="flex-end">
+        <ColorModeButton bg={"bg.emphasized"} />
+      </Box>
+    <WebSerialChecker>
+      
+      <VStack gap={5} padding={5}>
+        <Header />
+        <Toaster />
 
-      <DeviceControls
-        connected={connected}
-        onConnect={connectFunc}
-        onDisconnect={disconnectFunc}
-      />
-
-      <HStack gap={20}>
-        <DeviceStats 
-          connected={connected}
-          stats={stats} 
-          onRefreshTime={readTimeFunc}
-          onRefreshOperTime={readOperTimeFunc}
+        <DeviceControls
+          onConnect={connectFunc}
+          onDisconnect={disconnectFunc}
         />
-        <VStack gap={10}>
-          <DeviceId 
-            connected={connected} 
-            idSV={idSV} 
-            idVlan={idVlan} 
-            successIdSV={successIdSV} 
-            successIdVlan={successIdVlan} 
-            onIdVlan={recordIdVlanFunc} 
-            onIdSV={recordIdSVFunc}
+
+        <HStack gap={20}>
+          <DeviceStats 
+            onRefreshTime={readTimeFunc}
+            onRefreshOperTime={readOperTimeFunc}
           />
-          <MacAddressDevices 
-            connected={connected} 
-            macAddress={macAddress} 
-            successMacAddress={successMacAddress} 
-            onMacAddress={recordMacConnectedFunc}
+          <VStack gap={10}>
+            <DeviceId 
+              onIdVlan={recordIdVlanFunc} 
+              onIdSV={recordIdSVFunc}
+            />
+            <MacAddressDevices 
+              onMacAddress={recordMacConnectedFunc}
+            />
+          </VStack>
+          
+          <Calendar 
+            onTime={setTimeFunc}
           />
-        </VStack>
+        </HStack>
         
-        <Calendar 
-          connected={connected} 
-          successTime={successTime} 
-          onTime={setTimeFunc}
-        />
-      </HStack>
-
+      </VStack>
       
-      
+    </WebSerialChecker>
     </VStack>
   );
 }

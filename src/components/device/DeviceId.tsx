@@ -3,6 +3,7 @@ import { toaster } from "../ui/toaster";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useDeviceStore } from "../../store/deviceStore";
 
 const svIdSchema = z.object({
   svId: z
@@ -22,24 +23,19 @@ type SvIdForm = z.infer<typeof svIdSchema>;
 type VlanIdForm = z.infer<typeof vlanIdSchema>;
 
 interface DeviceIdPops {
-  connected: boolean;
-  idSV: string;
-  idVlan: string;
-  successIdSV: boolean;
-  successIdVlan: boolean;
   onIdVlan: (idVlan: number) => Promise<void>;
   onIdSV: (idSV: string) => Promise<void>;
 }
 
 export function DeviceId({
-  connected,
-  idSV,
-  idVlan,
-  successIdSV,
-  successIdVlan,
   onIdVlan,
   onIdSV,
 }: DeviceIdPops) {
+  const isConnected = useDeviceStore((state) => state.isConnected);
+  const idSV = useDeviceStore((state) => state.idSV);
+  const idVlan = useDeviceStore((state) => state.idVlan);
+  const isIdSVSuccess = useDeviceStore((state) => state.successFlags.idSV);
+  const isIdVlanSuccess = useDeviceStore((state) => state.successFlags.idVlan);
 
   const {
     register: registerSV,
@@ -71,7 +67,7 @@ export function DeviceId({
 
     try {
       await onIdSV(cleanIdSV);
-      if (successIdSV) {
+      if (isIdSVSuccess) {
         toaster.create({
           description: `SV ID ${cleanIdSV} успешно записан`,
           type: "success",
@@ -100,7 +96,7 @@ export function DeviceId({
 
     try {
       await onIdVlan(vlanNumber);
-      if (successIdVlan) {
+      if (isIdVlanSuccess) {
         toaster.create({
           description: `Vlan ID ${vlanNumber} успешно записан`,
           type: "success",
@@ -143,7 +139,7 @@ export function DeviceId({
           <Table.Cell textAlign="end">
             <Button 
               onClick={handleSubmitSV(onSVSubmit)} 
-              disabled={!connected || !!svErrors.svId}
+              disabled={!isConnected || !!svErrors.svId}
             >
               Записать
             </Button>
@@ -170,7 +166,7 @@ export function DeviceId({
           <Table.Cell textAlign="end">
             <Button
               onClick={handleSubmitVlan(onVlanSubmit)}
-              disabled={!connected || !!vlanErrors.vlanId}
+              disabled={!isConnected || !!vlanErrors.vlanId}
             >
               Записать
             </Button>

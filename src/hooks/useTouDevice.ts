@@ -1,121 +1,116 @@
-import { useState, useEffect } from "react";
-import { TouController } from "../TouController";
-import { TouProtocol } from "../TouProtocol";
+import { useRef, useCallback } from 'react';
+import { useDeviceStore } from '../store/deviceStore';
+import { SerialTransport } from '../transports/SerialTransport';
+import { TouRepository } from '../repositories/TouRepository';
+import { TouService } from '../services/TouService';
+import { TouProtocol } from '../protocols/TouProtocol';
+
+const toStringPadStart = (num: number, count: number, data: string = "0"): string => {
+  return num.toString().padStart(count, data);
+};
+
+const formatMacAddress = (bytes: number[]): string => {
+  return bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join(':');
+};
 
 export function useTouDevice() {
-  const [tou] = useState(new TouController(TouProtocol));
-  const [connected, setConnected] = useState(false);
-  const [serialNumber, setSerialNumber] = useState("");
-  const [deviceType, setDeviceType] = useState("");
-  const [mainSoftware, setMainSoftware] = useState("");
-  const [additionalSoftware, setAdditionalSoftware] = useState("");
-  const [operTime, setOperTime] = useState("");
-  const [currentTime, setCurrentTime] = useState("");
-  const [successTime, setSuccessTime] = useState(false);
-  const [macAddressTou, setMacAddressTou] = useState("");
-  const [successMacAddress, setSuccessMacAddress] = useState(false);
-  const [macAddressConnected, setMacAddressConnected] = useState("");
-  const [idSV, setIdSV] = useState("");
-  const [successIdSV, setSuccessIdSV] = useState(false);
-  const [idVlan, setIdVlan] = useState("");
-  const [successIdVlan, setSuccessIdVlan] = useState(false);
+  const {
+    setConnected,
+    setError,
+    setStats,
+    setMacAddresses,
+    setIdSV,
+    setIdVlan,
+    setSuccessFlag,
+  } = useDeviceStore();
 
-  const toStringPadStart = (num: number, count: number, data: string = "0"): string => {
-    return num.toString().padStart(count, data);
-  };
+  const serviceRef = useRef<TouService | null>(null);
 
-  const connectFunc = async (): Promise<void> => {
+  if (!serviceRef.current) {
+    const transport = new SerialTransport();
+    const repository = new TouRepository(TouProtocol, transport);
+    serviceRef.current = new TouService(repository, transport);
+  }
+
+  const service = serviceRef.current;
+
+  const connectFunc = useCallback(async (): Promise<void> => {
     try {
-      const result = await tou.connect();
-      console.log(result);
+      await service.connect();
 
-      await readSerialFunc();
-      await readDeviceTypeFunc();
-      await readOperTimeFunc();
-      await readTimeFunc();
-      await readSettingsSVFunc();
-      await readIdSVFunc();
-      await readIdVlanFunc();
+      const allData = await service.getAllData();
 
       setConnected(true);
-    } catch (error) {
-      console.log("Ошибка: " + (error as Error).message);
-    }
-  };
 
-  const disconnectFunc = async (): Promise<void> => {
+      setStats({
+        serialNumber: toStringPadStart(allData.serialNumber.serialNumber, 6),
+        deviceType: allData.deviceType.deviceType.join('.'),
+        mainSoftware: `${allData.deviceType.buildMainSoftware}.${allData.deviceType.versionMainSoftware}`,
+        additionalSoftware: `${allData.deviceType.buildAddSoftware}.${allData.deviceType.versionAddSoftware}`,
+        operTime: (() => {
+          const { dayOperTime, hourOperTime, minuteOperTime, secOperTime } =
+            TouProtocol.formatOperTime(allData.operTime.operTime);
+          return `${dayOperTime}д. ${hourOperTime}ч. ${minuteOperTime}мин. ${secOperTime}сек.`;
+        })(),
+        currentTime: `${toStringPadStart(allData.currentTime.dayTime, 2)}.${toStringPadStart(allData.currentTime.monthTime, 2)}.${toStringPadStart(allData.currentTime.yearTime, 4, "2000")} ${toStringPadStart(allData.currentTime.hourTime, 2)}:${toStringPadStart(allData.currentTime.minuteTime, 2)}:${toStringPadStart(allData.currentTime.secTime, 2)}`,
+      });
+
+      setMacAddresses({
+        tou: formatMacAddress(allData.settingsSV.macTou),
+        connected: formatMacAddress(allData.settingsSV.macConnectedDevice),
+      });
+      
+      setIdSV(allData.idSV.nameTou);
+      setIdVlan(String(allData.idVlan.idVlan));
+
+    } catch (error) {
+      setError((error as Error).message);
+    }
+  }, [service, setConnected, setError, setStats, setMacAddresses, setIdSV, setIdVlan]);
+
+  const disconnectFunc = useCallback(async () => {
     try {
-      const result = await tou.disconnect();
-      console.log(result);
+      await service.disconnect();
 
       setConnected(false);
     } catch (error) {
-      console.log("Ошибка: " + (error as Error).message);
+      setError((error as Error).message);
     }
-  };
+  }, [service, setError]);
 
-  const readSerialFunc = async (): Promise<void> => {
+  const readOperTimeFunc = useCallback(async (): Promise<void> => {
     try {
-      const dataSerial = await tou.readSerialNumber();
-
-      const bytes = Array.from(dataSerial.rawResponse as number[]);
-      console.log(`Ответ чтения серийного номера: ${TouProtocol.formatPacket(bytes)}`);
-
-      console.log(
-        `Серийный номер hex: ${TouProtocol.formatPacket(dataSerial.deviceAddress)}`,
-      );
-      const sn = toStringPadStart(dataSerial.serialNumber, 6);
-      setSerialNumber(sn);
-    } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
-    }
-  };
-
-  const readDeviceTypeFunc = async (): Promise<void> => {
-    try {
-      const dataDevice = await tou.readDeviceType();
-
-      const bytes = Array.from(dataDevice.rawResponse as number[]);
-      console.log(`Ответ чтения типа устройства: ${TouProtocol.formatPacket(bytes)}`);
-
-      setDeviceType(dataDevice.deviceType.join("."));
-      setMainSoftware(`${dataDevice.buildMainSoftware}.${dataDevice.versionMainSoftware}`);
-      setAdditionalSoftware(`${dataDevice.buildAddSoftware}.${dataDevice.versionAddSoftware}`);
-    } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
-    }
-  };
-
-  const readOperTimeFunc = async (): Promise<void> => {
-    try {
-      const dataOperTime = await tou.readOperTime();
-
-      const bytes = Array.from(dataOperTime.rawResponse as number[]);
-      console.log(`Ответ чтения времени наработки: ${TouProtocol.formatPacket(bytes)}`);
-
+      const dataOperTime = await service.getOperTime();
       const { dayOperTime, hourOperTime, minuteOperTime, secOperTime } =
         TouProtocol.formatOperTime(dataOperTime.operTime);
 
-      setOperTime(`${dayOperTime}д. ${hourOperTime}ч. ${minuteOperTime}мин. ${secOperTime}сек.`);
-    } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
-    }
-  };
+      const currentStats = useDeviceStore.getState().stats;
 
-  const readTimeFunc = async (): Promise<void> => {
+      setStats({ 
+        ...currentStats,
+        operTime: `${dayOperTime}д. ${hourOperTime}ч. ${minuteOperTime}мин. ${secOperTime}сек.`
+      });
+    } catch (error) {
+      setError((error as Error).message);
+    }
+  }, [service, setStats, setError]);
+
+  const readTimeFunc = useCallback(async () => {
     try {
-      const dataTime = await tou.readTime();
+      const dataTime = await service.getTime();
 
-      const bytes = Array.from(dataTime.rawResponse as number[]);
-      console.log(`Ответ чтения времени: ${TouProtocol.formatPacket(bytes)}`);
+      const currentStats = useDeviceStore.getState().stats;
 
-      setCurrentTime(`${toStringPadStart(dataTime.dayTime, 2)}.${toStringPadStart(dataTime.monthTime, 2)}.${toStringPadStart(dataTime.yearTime, 4, "2000")} ${toStringPadStart(dataTime.hourTime, 2)}:${toStringPadStart(dataTime.minuteTime, 2)}:${toStringPadStart(dataTime.secTime, 2)}`);
+      setStats({
+        ...currentStats,
+        currentTime: `${toStringPadStart(dataTime.dayTime, 2)}.${toStringPadStart(dataTime.monthTime, 2)}.${toStringPadStart(dataTime.yearTime, 4, "2000")} ${toStringPadStart(dataTime.hourTime, 2)}:${toStringPadStart(dataTime.minuteTime, 2)}:${toStringPadStart(dataTime.secTime, 2)}`,
+      });
     } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
+      setError((error as Error).message);
     }
-  };
+  }, [service, setStats, setError]);
 
-  const setTimeFunc = async (
+  const setTimeFunc = useCallback(async (
     year: number, 
     month: number, 
     day: number, 
@@ -125,169 +120,67 @@ export function useTouDevice() {
     timezone: number
   ): Promise<void> => {
     try {
-      // const [year, month, day, hour, minute, second, timezone] = [
-      //   2026, 2, 25, 10, 10, 23, 700,
-      // ];
+      const { isSuccess } = await service.setTime(year, month, day, hour, minute, second, timezone);
+      setSuccessFlag('time', isSuccess);
 
-      const {rawResponse, isSuccess} = await tou.setTime(
-        year,
-        month,
-        day,
-        hour,
-        minute,
-        second,
-        timezone,
-      );
-
-      const bytes = Array.from(rawResponse);
-      console.log(`Ответ установки времени: ${TouProtocol.formatPacket(bytes)}`);
-      console.log("Поменяли время в ТОУ");
-      await readTimeFunc();
-      setSuccessTime(isSuccess);
+      if (isSuccess) {
+        await readTimeFunc();
+      }
     } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
+      setError((error as Error).message);
     }
-  };
+  }, [service, readTimeFunc, setError, setSuccessFlag]);
 
-  const readSettingsSVFunc = async (): Promise<void> => {
-    try {
-      const dataSettingsSV = await tou.readSettingsSV();
-
-      const bytes = Array.from(dataSettingsSV.rawResponse as number[]);
-      console.log(`Ответ чтения настроек sv-потока: ${TouProtocol.formatPacket(bytes)}`);
-      console.log(
-        `mac адрес тоу hex: ${TouProtocol.formatPacket(dataSettingsSV.macTou)}`,
-      );
-      console.log(
-        `mac адрес подключенного hex: ${TouProtocol.formatPacket(dataSettingsSV.macConnectedDevice)}`,
-      );
-      setMacAddressTou(Array.from(dataSettingsSV.macTou)
-      .map((address) => address.toString(16).toUpperCase().padStart(2, "0"))
-      .join(":"));
-      setMacAddressConnected(Array.from(dataSettingsSV.macConnectedDevice)
-      .map((address) => address.toString(16).toUpperCase().padStart(2, "0"))
-      .join(":"));
-    } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
-    }
-  };
-
-  const recordMacConnectedFunc = async (macAddress: number[]): Promise<void> => {
+  const recordMacConnectedFunc = useCallback(async (macAddress: number[]): Promise<void> => {
     try {
       //const macAddress = [0x01, 0x0C, 0xCD, 0x04, 0x00, 0x01];
 
-      const {rawResponse, isSuccess} = await tou.recordMacConnected(
-        macAddress
-      );
+      const { isSuccess } = await service.setMacConnected(macAddress);
+      setSuccessFlag('macAddress', isSuccess);
 
-      const bytes = Array.from(rawResponse);
-      console.log(`Ответ установки mac-адреса: ${TouProtocol.formatPacket(bytes)}`);
-      console.log("Установили mac-адрес подключенного устройства");
-      await readSettingsSVFunc();
-      setSuccessMacAddress(isSuccess);
+      if (isSuccess) {
+        const settingsSV = await service.getSettingsSV();
+
+        setMacAddresses({
+          tou: formatMacAddress(settingsSV.macTou),
+          connected: formatMacAddress(settingsSV.macConnectedDevice),
+        });
+      }
     } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
+      setError((error as Error).message);
     }
-  };
+  }, [service, setMacAddresses, setSuccessFlag, setError]);
 
-  const readIdSVFunc = async (): Promise<void> => {
-    try {
-      const dataIdSV = await tou.readIdSV();
-
-      const bytes = Array.from(dataIdSV.rawResponse as number[]);
-      console.log(`Ответ чтения имени устройства (id sv): ${TouProtocol.formatPacket(bytes)}`);
-      console.log(`Ответ чтения id sv: ${dataIdSV.nameTou}`);
-
-      setIdSV(dataIdSV.nameTou);
-    } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
-    }
-  };
-
-  const recordIdSVFunc = async (idSV: string): Promise<void> => {
+  const recordIdSVFunc = useCallback(async (idSV: string): Promise<void> => {
     try {
       // RiM61850_SV1
-      const { rawResponse, isSuccess } = await tou.recordIdSV(idSV); // нужны ограничения на количество символов N ≤ 69
+      const { isSuccess } = await service.setIdSV(idSV); // нужны ограничения на количество символов N ≤ 69
+      setSuccessFlag('idSV', isSuccess);
 
-      const bytes = Array.from(rawResponse);
-      console.log(`Ответ установки имени устройства (id sv): ${TouProtocol.formatPacket(bytes)}`);
-      
-      await readIdSVFunc();
-      setSuccessIdSV(isSuccess);
+      if (isSuccess) {
+        const dataIdSv = await service.getIdSV();
+        setIdSV(dataIdSv.nameTou);
+      }
     } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
+      setError((error as Error).message);
     }
-  };
+  }, [service, setIdSV, setSuccessFlag, setError]);
 
-  const readIdVlanFunc = async (): Promise<void> => {
+  const recordIdVlanFunc = useCallback(async (idVlan: number): Promise<void> => {
     try {
-      const dataIdVlan = await tou.readIdVlan();
+      const {isSuccess} = await service.setIdVlan(idVlan); // нужны ограничение 0 - 4095
+      setSuccessFlag('idVlan', isSuccess);
 
-      const bytes = Array.from(dataIdVlan.rawResponse as number[]);
-      console.log(`Ответ чтения кадра SV-потока: ${TouProtocol.formatPacket(bytes)}`);
-      console.log(
-        `VLAN hex: ${TouProtocol.formatPacket(dataIdVlan.vlan)}`,
-      );
-      console.log(
-        `Id VLAN: ${dataIdVlan.idVlan}`);
-      console.log(
-        `priority VLAN: ${dataIdVlan.priorityVlan}`,
-      );
-      console.log(
-        `Drop Eligible Indicator: ${dataIdVlan.dropIndicator}`,
-      );
-      console.log(
-        `APPID: ${dataIdVlan.appId}`,
-      );
-      setIdVlan(`${dataIdVlan.idVlan}`);
+      if (isSuccess) {
+        const dataIdVlan = await service.getIdVlan();
+        setIdVlan(String(dataIdVlan.idVlan));
+      }
     } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
+      setError((error as Error).message);
     }
-  };
-
-  const recordIdVlanFunc = async (idVlan: number): Promise<void> => {
-    try {
-      const {rawResponse, isSuccess} = await tou.recordIdVlan(idVlan); // нужны ограничение 0 - 4095
-
-      const bytes = Array.from(rawResponse);
-      console.log(`Ответ установки id vlan: ${TouProtocol.formatPacket(bytes)}`);
-      await readIdVlanFunc();
-      setSuccessIdVlan(isSuccess);
-    } catch (error) {
-      console.log("Не удалось прочитать: " + (error as Error).message);
-    }
-  };
-
-  useEffect(() => {
-    if (!navigator.serial) {
-      console.log("Web Serial API не поддерживается! Используйте Chrome/Edge");
-    }
-  }, []);
-
-  const stats = [
-    { label: "Серийный номер", value: `${serialNumber || "—"}`, helpText: "Уникальный идентификатор устройства" },
-    { label: "Тип устройства", value: deviceType ? `РиМ ТОУ ${deviceType}` : "—", helpText: "Код модели" },
-    { label: "Версия ПО", value: `${mainSoftware || "—"} `, helpText: "Основное программное обеспечение" },
-    { label: "Доп ПО", value: `${additionalSoftware || "—"}`, helpText: "Дополнительное программное обеспечение"},
-    { label: "Время наработки", value: `${operTime || "—"}`, helpText: "С момента запуска" },
-    { label: "Текущее время", value: `${currentTime || "—"}`, helpText: "Время в устройстве" },
-  ]
-
-  const macAddress = [
-    {  name: "ТОУ отправитель", value: `${macAddressTou || "00:00:00:00:00:00"}`},
-    {  name: "Получатель", value: `${macAddressConnected || "00:00:00:00:00:00"}`},
-  ]
+  }, [service, setIdVlan, setSuccessFlag, setError]);
 
   return {
-    connected,
-    stats,
-    macAddress,
-    successMacAddress,
-    successTime,
-    idSV,
-    successIdSV,
-    idVlan,
-    successIdVlan,
     connectFunc,
     disconnectFunc,
     readOperTimeFunc,

@@ -20,7 +20,8 @@
     "react-icons": "^5.6.0",
     "react-input-mask": "^2.0.4",
     "use-mask-input": "^3.7.4",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

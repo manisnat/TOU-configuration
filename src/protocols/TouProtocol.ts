@@ -10,7 +10,7 @@ import type {
   IdSVData,
   IdVlanData,
   ErrorMessages
-} from "./types";
+} from "../types";
 
 interface TouProtocolType {
   errors: ErrorMessages;
@@ -78,7 +78,6 @@ export const TouProtocol: TouProtocolType = {
   checkResponseError(response: RawResponse, expectedCommand: number): boolean {
     if (!response || response.length === 0) {
       throw new Error("Получен пустой ответ");
-      return false;
     }
 
     const arr = Array.from(response);
@@ -86,12 +85,10 @@ export const TouProtocol: TouProtocolType = {
     const crc: number = this.calculateCRC(responseNoCrc);
     if ((arr.at(-2) !== (crc & 0xff)) && (arr.at(-1) !== ((crc >> 8) & 0xff))) {
       throw new Error("Не совпадает контрольная сумма");
-      return false;
     }
 
     if (response[3] !== expectedCommand) {
       throw new Error("Пришёл не тот код функции от ТОУ");
-      return false;
     }
 
     // Если код функции = ожидаемый + 0x80, значит это ошибка
@@ -99,7 +96,6 @@ export const TouProtocol: TouProtocolType = {
       throw new Error(
         `Причина ошибки от ТОУ: ${this.getErrorMessage(response[5])}`,
       );
-      return false;
     }
     return true;
   },

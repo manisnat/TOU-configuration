@@ -2,6 +2,7 @@ import { Table, Input, Button, VStack, Field, Tooltip } from "@chakra-ui/react";
 import { withMask } from "use-mask-input";
 import { toaster } from "../ui/toaster";
 import { useMacAddress } from "../../hooks/useMacAddress";
+import { useDeviceStore } from "../../store/deviceStore";
 
 interface MacAddressItem {
   name: string,
@@ -9,13 +10,19 @@ interface MacAddressItem {
 }
 
 interface MacAddressProps {
-  connected: boolean;
-  macAddress: MacAddressItem[];
-  successMacAddress: boolean;
   onMacAddress: (macAddress: number[]) => Promise<void>;
 }
 
-export function MacAddressDevices({connected, macAddress, successMacAddress, onMacAddress}: MacAddressProps) {
+export function MacAddressDevices({onMacAddress}: MacAddressProps) {
+  const isConnected = useDeviceStore((state) => state.isConnected);
+  const macAddresses = useDeviceStore((state) => state.macAddresses);
+  const isMacSuccess = useDeviceStore((state) => state.successFlags.macAddress);
+
+  const listMacAddress: MacAddressItem[] = [
+    {  name: "ТОУ отправитель", value: `${macAddresses.tou || "00:00:00:00:00:00"}`},
+    {  name: "Получатель", value: `${macAddresses.connected || "00:00:00:00:00:00"}`},
+  ];
+
   const {
     newMacAddress, 
     isErrorMac, 
@@ -49,7 +56,7 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
 
     else if (!isErrorMac && isValid) {
       await onMacAddress(macToArray(newMacAddress));
-      if (successMacAddress) {
+      if (isMacSuccess) {
         toaster.create({
           description: "MAC-адрес успешно записан",
           type: "success",
@@ -73,7 +80,7 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {macAddress.map((address) => (
+          {listMacAddress.map((address) => (
             <Table.Row key={address.name}>
               <Table.Cell>{address.name}</Table.Cell>
               <Table.Cell textAlign="end">{address.value}</Table.Cell>
@@ -109,7 +116,7 @@ export function MacAddressDevices({connected, macAddress, successMacAddress, onM
         <Tooltip.Trigger asChild>
           <Button 
             onClick={handleSaveMacAddress} 
-            disabled={!connected || isErrorMac}
+            disabled={!isConnected || isErrorMac}
           >
             Записать
           </Button>

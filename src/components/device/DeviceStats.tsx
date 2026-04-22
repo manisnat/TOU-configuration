@@ -1,5 +1,6 @@
 import { Button, DataList, VStack } from "@chakra-ui/react";
 import { InfoTip } from "../ui/toggle-tip";
+import { useDeviceStore } from "../../store/deviceStore";
 
 interface StatItem {
   label: string,
@@ -8,13 +9,23 @@ interface StatItem {
 }
 
 interface DeviceStatsProps {
-  connected: boolean;
-  stats: StatItem[];
   onRefreshTime: () => Promise<void>;
   onRefreshOperTime: () => Promise<void>;
 }
 
-export function DeviceStats({connected, stats, onRefreshTime, onRefreshOperTime}: DeviceStatsProps) {
+export function DeviceStats({onRefreshTime, onRefreshOperTime}: DeviceStatsProps) {
+  const isConnected = useDeviceStore((state) => state.isConnected);
+  const stats = useDeviceStore((state) => state.stats);
+
+  const listStats: StatItem[] = [
+    { label: "Серийный номер", value: `${stats.serialNumber || "—"}`, helpText: "Уникальный идентификатор устройства" },
+    { label: "Тип устройства", value: stats.deviceType ? `РиМ ТОУ ${stats.deviceType}` : "—", helpText: "Код модели" },
+    { label: "Версия ПО", value: `${stats.mainSoftware || "—"}`, helpText: "Основное программное обеспечение" },
+    { label: "Доп ПО", value: `${stats.additionalSoftware || "—"}`, helpText: "Дополнительное программное обеспечение"},
+    { label: "Время наработки", value: `${stats.operTime || "—"}`, helpText: "С момента запуска" },
+    { label: "Текущее время", value: `${stats.currentTime || "—"}`, helpText: "Время в устройстве" },
+  ];
+
   const handleRefreshFullTime = async () => {
     await onRefreshTime();
     await onRefreshOperTime();
@@ -22,8 +33,8 @@ export function DeviceStats({connected, stats, onRefreshTime, onRefreshOperTime}
 
   return (
     <VStack gap={4}>
-      <DataList.Root size={"lg"}>
-        {stats.map((item) => (
+      <DataList.Root size="lg">
+        {listStats.map((item) => (
           <DataList.Item key={item.label}>
             <DataList.ItemLabel>
               {item.label}
@@ -33,7 +44,7 @@ export function DeviceStats({connected, stats, onRefreshTime, onRefreshOperTime}
         </DataList.Item>
         ))}
       </DataList.Root>
-      <Button onClick={handleRefreshFullTime} disabled={!connected}>
+      <Button onClick={handleRefreshFullTime} disabled={!isConnected}>
         Обновить время
       </Button>
     </VStack>

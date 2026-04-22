@@ -1,10 +1,9 @@
 import { DatePicker, parseDate, HStack, VStack, Select, Portal, createListCollection, Text, Button, type DateValue } from "@chakra-ui/react"
 import { useDate } from "../../hooks/useDate"
 import { toaster } from "../ui/toaster";
+import { useDeviceStore } from "../../store/deviceStore";
 
 interface CalendarPops {
-  connected: boolean;
-  successTime: boolean;
   onTime: (
     year: number, 
     month: number, 
@@ -16,7 +15,9 @@ interface CalendarPops {
   ) => Promise<void>;
 }
 
-export function Calendar({connected, successTime, onTime}: CalendarPops) {
+export function Calendar({onTime}: CalendarPops) {
+  const isConnected = useDeviceStore((state) => state.isConnected);
+  const isTimeSuccess = useDeviceStore((state) => state.successFlags.time);
   const { dateValue, isErrorDate, errorMessageDate, year, month, day, hours, minutes, seconds, timezone, validDate, handleDateValue, handleHours, handleMinutes, handleSeconds, handleTimezone } = useDate();
 
   const hourCollection = createListCollection({
@@ -100,7 +101,7 @@ export function Calendar({connected, successTime, onTime}: CalendarPops) {
   const handleSaveDate = async () => {
     if (validDate(dateValue) && !isErrorDate) {
       await onTime(year, month, day, +hours, +minutes, +seconds, +timezone);
-      if (successTime) {
+      if (isTimeSuccess) {
         toaster.create({
           description: "Время успешно записано",
           type: "success",
@@ -136,7 +137,7 @@ export function Calendar({connected, successTime, onTime}: CalendarPops) {
     const tzValue = `${tzSign}${tzHours}${tzMinutes}`;
 
     await onTime(currentYear, currentMonth, currentDay, currentHour, currentMinute, currentSecond, +tzValue);
-    if (successTime) {
+    if (isTimeSuccess) {
       toaster.create({
         description: "Текущее время успешно записано",
         type: "success",
@@ -317,10 +318,10 @@ export function Calendar({connected, successTime, onTime}: CalendarPops) {
         </Select.Root>
       </VStack>
       <VStack>
-        <Button onClick={handleSaveDate} disabled={!connected}>
+        <Button onClick={handleSaveDate} disabled={!isConnected}>
           Записать время
         </Button>
-        <Button onClick={handleSaveCurrentTime} disabled={!connected}>
+        <Button onClick={handleSaveCurrentTime} disabled={!isConnected}>
           Записать время из текущей системы
         </Button>
       </VStack>
