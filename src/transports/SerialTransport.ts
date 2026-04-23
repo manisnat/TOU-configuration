@@ -26,12 +26,19 @@ export class SerialTransport {
   }
 
   public async connect(): Promise<void> {
+    if (!navigator.serial) {
+      throw new Error("Web Serial API не поддерживается. Используйте Chrome/Edge");
+    }
+    if (this._isConnected) {
+      throw new Error("Порт уже подключен");
+    }
     try {
-      if (this._isConnected) {
-        throw new Error("Порт уже подключен");
+      this.port = await navigator.serial.requestPort();
+
+      if (!this.port) {
+        throw new Error("Порт не выбран");
       }
 
-      this.port = await navigator.serial.requestPort();
       await this.port.open({
         baudRate: 115200,
         dataBits: 8,
@@ -39,13 +46,24 @@ export class SerialTransport {
         parity: "none",
       });
 
+      if (!this.port.readable || !this.port.writable) {
+        throw new Error("Порт не поддерживает чтение/запись");
+      }
+
       this.reader = this.port.readable.getReader();
       this.writer = this.port.writable.getWriter();
       this._isConnected = true;
     } catch (err) {
       await this.disconnect();
-      console.error((err as Error).message);
-      throw new Error("Ошибка подключения: " + (err as Error).message);
+      const error = err as Error;
+    
+      if (error.name === 'NotFoundError') {
+        throw new Error("Выбор порта отменён пользователем");
+      }
+      if (error.name === 'NetworkError') {
+        throw new Error("Порт уже используется другим приложением или недоступен");
+      }
+      throw new Error(`Ошибка подключения: ${error.message}`);
     }
   }
 

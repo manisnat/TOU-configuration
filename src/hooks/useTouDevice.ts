@@ -34,10 +34,10 @@ export function useTouDevice() {
 
   const service = serviceRef.current;
 
-  const connectFunc = useCallback(async (): Promise<void> => {
+  const connectFunc = useCallback(async (): Promise<boolean> => {
+    setError(null);
     try {
       await service.connect();
-
       const allData = await service.getAllData();
 
       setConnected(true);
@@ -63,18 +63,23 @@ export function useTouDevice() {
       setIdSV(allData.idSV.nameTou);
       setIdVlan(String(allData.idVlan.idVlan));
 
+      return true;
     } catch (error) {
       setError((error as Error).message);
+      return false;
     }
   }, [service, setConnected, setError, setStats, setMacAddresses, setIdSV, setIdVlan]);
 
-  const disconnectFunc = useCallback(async () => {
+  const disconnectFunc = useCallback(async (): Promise<boolean> => {
+    setError(null);
     try {
       await service.disconnect();
 
       setConnected(false);
+      return true;
     } catch (error) {
       setError((error as Error).message);
+      return false;
     }
   }, [service, setError]);
 
