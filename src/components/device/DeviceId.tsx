@@ -111,7 +111,7 @@ export function DeviceId({
   };
 
   return (
-    <Table.Root size="md" interactive maxWidth="550px">
+    <Table.Root size="lg" interactive maxWidth="550px">
       <Table.Header>
         <Table.Row>
           <Table.ColumnHeader></Table.ColumnHeader>

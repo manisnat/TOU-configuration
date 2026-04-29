@@ -1,4 +1,4 @@
-import { HStack, VStack, Box } from "@chakra-ui/react";
+import { Stack, VStack, Box } from "@chakra-ui/react";
 import { Header } from "./components/layout/Header";
 import { DeviceControls } from "./components/device/DeviceControls";
 import { DeviceStats } from "./components/device/DeviceStats";
@@ -24,45 +24,62 @@ function App() {
 
 
   return (
-    <VStack padding={2}>
-      <Box width="100%" display="flex" justifyContent="flex-end">
+    <Box p={2}>
+      <Box width="100%" display="flex" justifyContent="right">
         <ColorModeButton bg={"bg.emphasized"} />
       </Box>
-    <WebSerialChecker>
-      
-      <VStack gap={5} padding={5}>
-        <Header />
-        <Toaster />
 
-        <DeviceControls
-          onConnect={connectFunc}
-          onDisconnect={disconnectFunc}
-        />
+      <WebSerialChecker>
+        <VStack 
+          gap={8} 
+          padding={5}
+        >
+          <Header />
+          <Toaster />
 
-        <HStack gap={20}>
-          <DeviceStats 
-            onRefreshTime={readTimeFunc}
-            onRefreshOperTime={readOperTimeFunc}
+          <DeviceControls
+            onConnect={connectFunc}
+            onDisconnect={disconnectFunc}
           />
-          <VStack gap={10}>
-            <DeviceId 
-              onIdVlan={recordIdVlanFunc} 
-              onIdSV={recordIdSVFunc}
+
+          <Stack 
+            direction={{ base: "column", lg: "row"}}
+            display="flex"
+            flexWrap="wrap"
+            justifyContent="center"
+            gap={50}
+          >
+            <Box 
+              minW="200px"
+              padding={5}
+            >
+              <DeviceStats 
+                onRefreshTime={readTimeFunc}
+                onRefreshOperTime={readOperTimeFunc}
+              />
+            </Box>
+            <Stack 
+              gap={8}
+              minW="500px"
+            >
+              <DeviceId 
+                onIdVlan={recordIdVlanFunc} 
+                onIdSV={recordIdSVFunc}
+              />
+              <MacAddressDevices 
+                onMacAddress={recordMacConnectedFunc}
+              />
+            </Stack>
+            
+            <Calendar 
+              onTime={setTimeFunc}
             />
-            <MacAddressDevices 
-              onMacAddress={recordMacConnectedFunc}
-            />
-          </VStack>
+          </Stack>
           
-          <Calendar 
-            onTime={setTimeFunc}
-          />
-        </HStack>
+        </VStack>
         
-      </VStack>
-      
-    </WebSerialChecker>
-    </VStack>
+      </WebSerialChecker>
+    </Box>
   );
 }
 

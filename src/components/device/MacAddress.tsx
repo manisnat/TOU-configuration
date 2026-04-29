@@ -72,7 +72,7 @@ export function MacAddressDevices({onMacAddress}: MacAddressProps) {
 
   return (
     <VStack>
-      <Table.Root size="lg" interactive maxWidth="400px">
+      <Table.Root size="lg" interactive maxWidth="550px">
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader>Устройство</Table.ColumnHeader>
