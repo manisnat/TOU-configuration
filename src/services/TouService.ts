@@ -12,6 +12,9 @@ import type {
   SettingsSVData,
   IdSVData, 
   IdVlanData,
+  StatusLogData,
+  NumLineLogData,
+  LineLogData,
 } from '../types';
 
 export class TouService {
@@ -144,6 +147,41 @@ export class TouService {
 
   public async setIdVlan(idVlan: number): Promise<SuccessResponse> {
     const {rawResponse, isSuccess} = await this.repository.sendIdVlanCommand(idVlan);
+
+    return { rawResponse, isSuccess };
+  }
+
+  public async getStatusLog(numLog: number): Promise<StatusLogData> {
+    const response = await this.repository.fetchStatusLogRaw(numLog);
+    const parsed = TouProtocol.parseStatusLog(response);
+
+    return parsed;
+  }
+
+  public async getNumLineLog(
+    numLog: number,
+    year: number, 
+    month: number, 
+    day: number, 
+    hour: number, 
+    minute: number, 
+    second: number, 
+  ): Promise<NumLineLogData> {
+    const response = await this.repository.fetchNumLineLogRaw(numLog, year, month, day, hour, minute, second);
+    const parsed = TouProtocol.parseNumLineLog(response);
+
+    return parsed;
+  }
+
+  public async getLineLog(numLog: number, numLine: number): Promise<LineLogData> {
+    const response = await this.repository.fetchLineLogRaw(numLog, numLine);
+    const parsed = TouProtocol.parseLineLog(response);
+
+    return parsed;
+  }
+
+  public async setClearLog(numLog: number): Promise<SuccessResponse> {
+    const {rawResponse, isSuccess} = await this.repository.clearLogRaw(numLog);
 
     return { rawResponse, isSuccess };
   }

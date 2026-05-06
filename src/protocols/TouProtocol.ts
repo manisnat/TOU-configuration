@@ -9,6 +9,9 @@ import type {
   SettingsSVData,
   IdSVData,
   IdVlanData,
+  StatusLogData,
+  NumLineLogData,
+  LineLogData,
   ErrorMessages
 } from "../types";
 
@@ -28,6 +31,9 @@ interface TouProtocolType {
   parseSettingsSV(response: RawResponse): SettingsSVData;
   parseIdSV(response: RawResponse): IdSVData;
   parseIdVlan(response: RawResponse): IdVlanData;
+  parseStatusLog(response: RawResponse): StatusLogData;
+  parseNumLineLog(response: RawResponse): NumLineLogData;
+  parseLineLog(response: RawResponse): LineLogData;
 }
 
 export const TouProtocol: TouProtocolType = {
@@ -220,4 +226,54 @@ export const TouProtocol: TouProtocolType = {
       rawResponse: arr,
     };
   }, 
+
+  parseStatusLog(response: RawResponse): StatusLogData {
+    const arr = Array.from(response);
+    const capacityLog: [number, number] = [arr[12], arr[13]];
+    
+    return {
+      numberLog: arr[5],
+      yearTimeLast: arr[6],
+      monthTimeLast: arr[7],
+      dayTimeLast: arr[8],
+      hourTimeLast: arr[9],
+      minuteTimeLast: arr[10],
+      secTimeLast: arr[11],
+      capacityLog: capacityLog,
+      rawResponse: arr,
+    };
+  },
+
+  parseNumLineLog(response: RawResponse): NumLineLogData {
+    const arr = Array.from(response);
+    const numLine: [number, number] = [arr[12], arr[13]];
+    
+    return {
+      numberLog: arr[5],
+      yearTimeLast: arr[6],
+      monthTimeLast: arr[7],
+      dayTimeLast: arr[8],
+      hourTimeLast: arr[9],
+      minuteTimeLast: arr[10],
+      secTimeLast: arr[11],
+      numberLine: numLine,
+      rawResponse: arr,
+    };
+  },
+
+  parseLineLog(response: RawResponse): LineLogData {
+    const arr = Array.from(response);
+    const numLine: [number, number] = [arr[6], arr[7]];
+    let line: number[] = [];
+    for (let i = 8; i < arr[4] + 3; i++) {
+      line.push(arr[i]);
+    }
+    
+    return {
+      numberLog: arr[5],
+      numberLine: numLine,
+      line: line,
+      rawResponse: arr,
+    };
+  },
 };

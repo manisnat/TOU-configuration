@@ -50,8 +50,8 @@ export class TouRepository {
     return {rawResponse, isSuccess};
   }
 
-  private async readCommand(command: number): Promise<RawResponse> {
-    const {rawResponse} = await this.sendCommand(command);
+  private async readCommand(command: number, data?: number[]): Promise<RawResponse> {
+    const {rawResponse} = await this.sendCommand(command, data);
     this.logCommand(command, rawResponse);
     
     return rawResponse;
@@ -137,5 +137,36 @@ export class TouRepository {
     const idVlanBytes: number[] = [idVlan & 0xFF, (idVlan >> 8) & 0xFF]; 
 
     return this.writeCommand(0x4A, idVlanBytes);
+  }
+
+  public async fetchStatusLogRaw(numLog: number): Promise<RawResponse> {
+    return this.readCommand(0x30, [numLog]);
+  }
+
+  public async fetchNumLineLogRaw(
+    numLog: number, 
+    year: number, 
+    month: number, 
+    day: number, 
+    hour: number, 
+    minute: number, 
+    second: number, 
+  ): Promise<RawResponse> {
+    const time: number[] = [year - 2000, month, day, hour, minute, second];
+    const data: number[] = [numLog, ...time];
+    return this.readCommand(0x31, data);
+  }
+
+  public async fetchLineLogRaw(
+    numLog: number,
+    numLine: number,
+  ): Promise<RawResponse> {
+    const numLineBytes: number[] = [numLine & 0xFF, (numLine >> 8) & 0xFF]; 
+    const data: number[] = [numLog, ...numLineBytes];
+    return this.readCommand(0x32, data);
+  }
+
+  public async clearLogRaw(numLog: number): Promise<SuccessResponse> {
+    return this.writeCommand(0x33, [numLog]);
   }
 }

@@ -9,6 +9,7 @@ import { Toaster } from "./components/ui/toaster";
 import { Calendar } from "./components/device/Calendar";
 import { WebSerialChecker } from "./components/transport/WebSerialChecker";
 import { ColorModeButton } from "./components/ui/color-mode";
+import { LogConsole } from "./components/device/LogConsole";
 
 function App() {  
   const {
@@ -19,7 +20,8 @@ function App() {
     readTimeFunc,
     recordMacConnectedFunc,
     recordIdSVFunc,
-    recordIdVlanFunc
+    recordIdVlanFunc,
+    readLog,
   } = useTouDevice();
 
 
@@ -48,6 +50,7 @@ function App() {
             flexWrap="wrap"
             justifyContent="center"
             gap={50}
+            px={10}
           >
             <Box 
               minW="200px"
@@ -74,6 +77,12 @@ function App() {
             <Calendar 
               onTime={setTimeFunc}
             />
+
+            <Box w="100%">
+              <LogConsole 
+                onReadLog={readLog}
+              />
+            </Box>
           </Stack>
           
         </VStack>

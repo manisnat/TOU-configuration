@@ -21,6 +21,7 @@ export function useTouDevice() {
     setMacAddresses,
     setIdSV,
     setIdVlan,
+    setLog,
     setSuccessFlag,
   } = useDeviceStore();
 
@@ -62,6 +63,8 @@ export function useTouDevice() {
       
       setIdSV(allData.idSV.nameTou);
       setIdVlan(String(allData.idVlan.idVlan));
+
+      await readLog(1);
 
       return true;
     } catch (error) {
@@ -185,6 +188,48 @@ export function useTouDevice() {
     }
   }, [service, setIdVlan, setSuccessFlag, setError]);
 
+  const readLog = useCallback(async (numLog: number): Promise<void> => {
+    try {
+      const logData = await service.getStatusLog(numLog);
+      const capacityLog = TouProtocol.bytesToInt(logData.capacityLog);
+
+      console.log(`Время последней записи: ${toStringPadStart(logData.dayTimeLast, 2)}.${toStringPadStart(logData.monthTimeLast, 2)}.${toStringPadStart(logData.yearTimeLast, 4, "2000")} ${toStringPadStart(logData.hourTimeLast, 2)}:${toStringPadStart(logData.minuteTimeLast, 2)}:${toStringPadStart(logData.secTimeLast, 2)}`);
+      console.log(`Ёмкость журнала: ${capacityLog}`);
+
+      const entries: Array<{ number: number; date: string; event: string }> = [];
+
+      for (let i = 1; i <= capacityLog; i++) {
+        const lineLogData = await service.getLineLog(numLog, i);
+        entries.push({
+          number: TouProtocol.bytesToInt(lineLogData.numberLine),
+          date: `${toStringPadStart(lineLogData.line[2], 2)}.${toStringPadStart(lineLogData.line[1], 2)}.${toStringPadStart(lineLogData.line[0], 4, "2000")} ${toStringPadStart(lineLogData.line[3], 2)}:${toStringPadStart(lineLogData.line[4], 2)}:${toStringPadStart(lineLogData.line[5], 2)}`,
+          event: lineLogData.line[6] ? 'Включение' : 'Отключение',
+        });
+      }
+
+      setLog({ 
+        timeLast: `${toStringPadStart(logData.dayTimeLast, 2)}.${toStringPadStart(logData.monthTimeLast, 2)}.${toStringPadStart(logData.yearTimeLast, 4, "2000")} ${toStringPadStart(logData.hourTimeLast, 2)}:${toStringPadStart(logData.minuteTimeLast, 2)}:${toStringPadStart(logData.secTimeLast, 2)}`,
+        capacity: capacityLog,
+        entries: entries,
+      });
+
+
+    // const numLineLogData = await service.getNumLineLog(numLog, 2000, 1, 1, 1, 0, 0);
+    // console.log(`${toStringPadStart(numLineLogData.dayTimeLast, 2)}.${toStringPadStart(numLineLogData.monthTimeLast, 2)}.${toStringPadStart(numLineLogData.yearTimeLast, 4, "2000")} ${toStringPadStart(numLineLogData.hourTimeLast, 2)}:${toStringPadStart(numLineLogData.minuteTimeLast, 2)}:${toStringPadStart(numLineLogData.secTimeLast, 2)}`);
+    // console.log(TouProtocol.bytesToInt(numLineLogData.numberLine));
+
+    // const lineLogData = await service.getLineLog(numLog, 2);
+    // console.log(lineLogData.line);
+    // console.log(TouProtocol.bytesToInt(lineLogData.numberLine));
+
+
+    // const clearLogData = await service.setClearLog(numLog);
+    // console.log(clearLogData.isSuccess);
+    } catch (error) {
+      setError((error as Error).message);
+    }
+  }, [service, setLog, setError]);
+
   return {
     connectFunc,
     disconnectFunc,
@@ -194,5 +239,6 @@ export function useTouDevice() {
     recordMacConnectedFunc,
     recordIdSVFunc,
     recordIdVlanFunc,
+    readLog,
   };
 }

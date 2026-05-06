@@ -64,6 +64,37 @@ export interface IdVlanData {
   rawResponse: RawResponse;
 }
 
+export interface StatusLogData {
+  numberLog: number;
+  yearTimeLast: number;
+  monthTimeLast: number;
+  dayTimeLast: number;
+  hourTimeLast: number;
+  minuteTimeLast: number;
+  secTimeLast: number;
+  capacityLog: [number, number];
+  rawResponse: RawResponse;
+}
+
+export interface NumLineLogData {
+  numberLog: number;
+  yearTimeLast: number;
+  monthTimeLast: number;
+  dayTimeLast: number;
+  hourTimeLast: number;
+  minuteTimeLast: number;
+  secTimeLast: number;
+  numberLine: [number, number];
+  rawResponse: RawResponse;
+}
+
+export interface LineLogData {
+  numberLog: number;
+  numberLine: [number, number];
+  line: number[];
+  rawResponse: RawResponse;
+}
+
 export interface ErrorMessages {
   [errorCode: number]: string;
 }

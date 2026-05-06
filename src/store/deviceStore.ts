@@ -14,6 +14,18 @@ export interface MacAddresses {
   connected: string; 
 }
 
+export interface LogEntry {
+  number: number;
+  date: string;
+  event: string;
+}
+
+export interface Log {
+  timeLast: string;
+  capacity: number;
+  entries: LogEntry[];
+}
+
 export interface DeviceState {
   isConnected: boolean;
   error: string | null;
@@ -22,6 +34,8 @@ export interface DeviceState {
   macAddresses: MacAddresses;
   idSV: string;
   idVlan: string;
+
+  log: Log;
 
   successFlags: {
     time: boolean;
@@ -37,6 +51,8 @@ export interface DeviceState {
   setMacAddresses: (macAddresses: MacAddresses) => void;
   setIdSV: (idSV: string) => void;
   setIdVlan: (idVlan: string) => void;
+
+  setLog: (log: Log) => void;
 
   setSuccessFlag: (key: keyof DeviceState['successFlags'], value: boolean) => void;
 }
@@ -55,6 +71,12 @@ const initialMacAddresses: MacAddresses = {
   connected: '',
 };
 
+const initialLog: Log = {
+  timeLast: '',
+  capacity: 0,
+  entries: [],
+};
+
 export const useDeviceStore = create<DeviceState>((set) => ({
   isConnected: false,
   error: null,
@@ -62,6 +84,7 @@ export const useDeviceStore = create<DeviceState>((set) => ({
   macAddresses: initialMacAddresses,
   idSV: '',
   idVlan: '',
+  log: initialLog,
   successFlags: {
     time: false,
     macAddress: false,
@@ -80,6 +103,8 @@ export const useDeviceStore = create<DeviceState>((set) => ({
   setIdSV: (idSV) => set({ idSV }),
   
   setIdVlan: (idVlan) => set({ idVlan }),
+
+  setLog: (log) => set({ log }),
   
   setSuccessFlag: (key, value) => set((state) => ({
     successFlags: { ...state.successFlags, [key]: value }
