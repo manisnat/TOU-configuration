@@ -14,7 +14,10 @@ import type {
   IdVlanData,
   StatusLogData,
   NumLineLogData,
-  LineLogData,
+  LineLogOnOffData,
+  LineLogCorrectionsData,
+  LineLogMalfunctionsData,
+  LineLogConnectionsData,
 } from '../types';
 
 export class TouService {
@@ -173,9 +176,30 @@ export class TouService {
     return parsed;
   }
 
-  public async getLineLog(numLog: number, numLine: number): Promise<LineLogData> {
+  public async getLineLogOnOff(numLog: number, numLine: number): Promise<LineLogOnOffData> {
     const response = await this.repository.fetchLineLogRaw(numLog, numLine);
-    const parsed = TouProtocol.parseLineLog(response);
+    const parsed = TouProtocol.parseLineLogOnOff(response);
+
+    return parsed;
+  }
+
+  public async getLineLogCorrections(numLog: number, numLine: number): Promise<LineLogCorrectionsData> {
+    const response = await this.repository.fetchLineLogRaw(numLog, numLine);
+    const parsed = TouProtocol.parseLineLogCorrections(response);
+
+    return parsed;
+  }
+
+  public async getLineLogMalfunctions(numLog: number, numLine: number): Promise<LineLogMalfunctionsData> {
+    const response = await this.repository.fetchLineLogRaw(numLog, numLine);
+    const parsed = TouProtocol.parseLineLogMalfunctions(response);
+
+    return parsed;
+  }
+
+  public async getLineLogConnections(numLog: number, numLine: number): Promise<LineLogConnectionsData> {
+    const response = await this.repository.fetchLineLogRaw(numLog, numLine);
+    const parsed = TouProtocol.parseLineLogConnections(response);
 
     return parsed;
   }

@@ -1,4 +1,4 @@
-import { Button, Field, Input, Table } from "@chakra-ui/react";
+import { Button, Field, Input, Table, Box } from "@chakra-ui/react";
 import { toaster } from "../ui/toaster";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -111,68 +111,70 @@ export function DeviceId({
   };
 
   return (
-    <Table.Root size="lg" interactive maxWidth="550px">
-      <Table.Header>
-        <Table.Row>
-          <Table.ColumnHeader></Table.ColumnHeader>
-          <Table.ColumnHeader>Текущий</Table.ColumnHeader>
-          <Table.ColumnHeader textAlign="end">Новый</Table.ColumnHeader>
-        </Table.Row>
-      </Table.Header>
-      <Table.Body>
-        {/* SV ID */}
-        <Table.Row key="SVId">
-          <Table.Cell>SV ID устройства</Table.Cell>
-          <Table.Cell>{idSV || "—"}</Table.Cell>
-          <Table.Cell>
-            <Field.Root invalid={!!svErrors.svId}>
-              <Input
-                type="text"
-                {...registerSV("svId")}
-                maxLength={12}
-              />
-              {svErrors.svId && (
-                <Field.ErrorText>{svErrors.svId.message}</Field.ErrorText>
-              )}
-            </Field.Root>
-          </Table.Cell>
-          <Table.Cell textAlign="end">
-            <Button 
-              onClick={handleSubmitSV(onSVSubmit)} 
-              disabled={!isConnected || !!svErrors.svId}
-            >
-              Записать
-            </Button>
-          </Table.Cell>
-        </Table.Row>
+    <Box display="flex" justifyContent="center">
+      <Table.Root size="lg" interactive maxWidth="550px">
+        <Table.Header>
+          <Table.Row>
+            <Table.ColumnHeader></Table.ColumnHeader>
+            <Table.ColumnHeader>Текущий</Table.ColumnHeader>
+            <Table.ColumnHeader textAlign="end">Новый</Table.ColumnHeader>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {/* SV ID */}
+          <Table.Row key="SVId">
+            <Table.Cell>SV ID устройства</Table.Cell>
+            <Table.Cell>{idSV || "—"}</Table.Cell>
+            <Table.Cell>
+              <Field.Root invalid={!!svErrors.svId}>
+                <Input
+                  type="text"
+                  {...registerSV("svId")}
+                  maxLength={12}
+                />
+                {svErrors.svId && (
+                  <Field.ErrorText>{svErrors.svId.message}</Field.ErrorText>
+                )}
+              </Field.Root>
+            </Table.Cell>
+            <Table.Cell textAlign="end">
+              <Button 
+                onClick={handleSubmitSV(onSVSubmit)} 
+                disabled={!isConnected || !!svErrors.svId}
+              >
+                Записать
+              </Button>
+            </Table.Cell>
+          </Table.Row>
 
-        {/* VLAN ID */}
-        <Table.Row key="VlanId">
-          <Table.Cell>Vlan ID устройства</Table.Cell>
-          <Table.Cell>{idVlan || "—"}</Table.Cell>
-          <Table.Cell>
-            <Field.Root invalid={!!vlanErrors.vlanId}>
-              <Input
-                type="text"
-                {...registerVlan("vlanId")}
-                placeholder="0 - 4095"
-                maxLength={4}
-              />
-              {vlanErrors.vlanId && (
-                <Field.ErrorText>{vlanErrors.vlanId.message}</Field.ErrorText>
-              )}
-            </Field.Root>
-          </Table.Cell>
-          <Table.Cell textAlign="end">
-            <Button
-              onClick={handleSubmitVlan(onVlanSubmit)}
-              disabled={!isConnected || !!vlanErrors.vlanId}
-            >
-              Записать
-            </Button>
-          </Table.Cell>
-        </Table.Row>
-      </Table.Body>
-    </Table.Root>
+          {/* VLAN ID */}
+          <Table.Row key="VlanId">
+            <Table.Cell>Vlan ID устройства</Table.Cell>
+            <Table.Cell>{idVlan || "—"}</Table.Cell>
+            <Table.Cell>
+              <Field.Root invalid={!!vlanErrors.vlanId}>
+                <Input
+                  type="text"
+                  {...registerVlan("vlanId")}
+                  placeholder="0 - 4095"
+                  maxLength={4}
+                />
+                {vlanErrors.vlanId && (
+                  <Field.ErrorText>{vlanErrors.vlanId.message}</Field.ErrorText>
+                )}
+              </Field.Root>
+            </Table.Cell>
+            <Table.Cell textAlign="end">
+              <Button
+                onClick={handleSubmitVlan(onVlanSubmit)}
+                disabled={!isConnected || !!vlanErrors.vlanId}
+              >
+                Записать
+              </Button>
+            </Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table.Root>
+    </Box>
   );
 }

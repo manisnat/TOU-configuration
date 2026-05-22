@@ -3,7 +3,7 @@
 interface SerialPort {
   readable: ReadableStream;
   writable: WritableStream;
-  open(opttions: {baudRate: number, dataBits: number, stopBits: number, parity: string}): Promise<void>;
+  open(options: { baudRate: number; dataBits: number; stopBits: number; parity: string }): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -20,6 +20,12 @@ export class SerialTransport {
   private reader: ReadableStreamDefaultReader | null = null;
   private writer: WritableStreamDefaultWriter | null = null;
   private _isConnected: boolean = false;
+  private isSending: boolean = false;
+  private sendQueue: Array<{
+    data: Uint8Array;
+    resolve: (value: Uint8Array) => void;
+    reject: (reason: Error) => void;
+  }> = [];
 
   public get isConnected(): boolean {
     return this._isConnected;
@@ -73,12 +79,15 @@ export class SerialTransport {
         return;
       }
 
+      this.sendQueue = [];
+      this.isSending = false;
+
       if (this.reader) {
         try {
           await this.reader.cancel();
           this.reader.releaseLock();
-        } catch (e) {
-          console.log("Ошибка при закрытии reader:", e);
+        } catch (err) {
+          throw new Error(`Ошибка при закрытии reader: ${err}`);
         } finally {
           this.reader = null;
         }
@@ -88,8 +97,8 @@ export class SerialTransport {
         try {
           await this.writer.close();
           this.writer.releaseLock();
-        } catch (e) {
-          console.log("Ошибка при закрытии writer:", e);
+        } catch (err) {
+          throw new Error(`Ошибка при закрытии writer: ${err}`);
         } finally {
           this.writer = null;
         }
@@ -100,8 +109,8 @@ export class SerialTransport {
           if (this.port.readable || this.port.writable) {
             await this.port.close();
           }
-        } catch (e) {
-          console.log("Ошибка при закрытии port:", e);
+        } catch (err) {
+          throw new Error(`Ошибка при закрытии port: ${err}`);
         } finally {
           this.port = null;
         }
@@ -114,46 +123,192 @@ export class SerialTransport {
     }
   }
 
-  public async sendReceive(data: Uint8Array): Promise<Uint8Array> {
-    await this.send(data);
-    const response = await this.receive();
+  public async flushWriter(): Promise<void> {
+    if (!this.writer || !this._isConnected) {
+      return;
+    }
+    
+    try {
+      await this.writer.close();
+      this.writer.releaseLock();
+      
+      if (this.port && this.port.writable) {
+        this.writer = this.port.writable.getWriter();
+      }
+    } catch (err) {
+      throw new Error(`Ошибка при очистке writer: ${err}`);
+    }
+  }
 
-    return response;
+  public async resetWriter(): Promise<void> {
+    if (!this.writer) return;
+    
+    try {
+      await this.writer.close();
+    } catch (err) {
+      throw new Error(`Ошибка при закрытии writer: ${err}`);
+    }
+    
+    try {
+      this.writer.releaseLock();
+    } catch (err) {
+      throw new Error(`Ошибка при releaseLock: ${err}`);
+    }
+    
+    if (this.port && this.port.writable) {
+      this.writer = this.port.writable.getWriter();
+    }
+  }
+
+  public async flushReader(): Promise<void> {
+    if (!this.reader || !this._isConnected) {
+      return;
+    }
+    
+    try {
+      let readCount = 0;
+      let hasData = true;
+      
+      while (hasData && readCount < 50) {
+        const timeoutPromise = new Promise<{ value: Uint8Array | undefined; done: boolean }>((resolve) => {
+          setTimeout(() => resolve({ value: undefined, done: true }), 10);
+        });
+        
+        const readPromise = this.reader.read();
+        const { value, done } = await Promise.race([readPromise, timeoutPromise]);
+        
+        if (done) {
+          hasData = false;
+        }
+        
+        if (value && value.length > 0) {
+          readCount++;
+          console.log(`[flushReader] Отброшено ${value.length} байт`);
+        }
+      }
+      
+    } catch (err) {
+      throw new Error(`Ошибка при очистке: ${err}`);
+    }
+    
+    if (this.port && this.port.readable && this.reader) {
+      try {
+        this.reader.releaseLock();
+      } catch (err) {}
+      this.reader = this.port.readable.getReader();
+    }
+  }
+
+  public async sendReceive(data: Uint8Array): Promise<Uint8Array> {
+    // Очередь для последовательной отправки
+    if (this.isSending) {
+      return new Promise((resolve, reject) => {
+        this.sendQueue.push({ data, resolve, reject });
+      });
+    }
+    
+    this.isSending = true;
+    
+    try {
+      await this.flushReader();
+      await this.flushWriter();
+      
+      await this.send(data);
+      const response = await this.receive();
+      
+      return response;
+    } finally {
+      this.isSending = false;
+      
+      // Обрабатываем следующий запрос из очереди
+      const next = this.sendQueue.shift();
+      if (next) {
+        this.sendReceive(next.data)
+          .then(next.resolve)
+          .catch(next.reject);
+      }
+    }
   }
 
   public async send(data: Uint8Array): Promise<void> {
-    if (!this._isConnected || !this.writer || !this.reader) {
+    if (!this._isConnected || !this.writer) {
       throw new Error("Нет подключения к устройству");
     }
 
-    await this.writer.write(data);
+    try {
+      await this.writer.write(data);
+    } catch (err) {
+      // При ошибке отправки сбрасываем writer
+      await this.resetWriter();
+      throw new Error(`Ошибка при отправки: ${err}`);
+    }
   }
 
   public async receive(): Promise<Uint8Array> {
     if (!this._isConnected || !this.reader) {
       throw new Error("Нет подключения к устройству");
     }
+    
     const chunks: Uint8Array[] = [];
-
-    while (true) {
-      const { value, done } = await this.reader.read();
-
-      if (done) {
-        await this.disconnect();
-        throw new Error("Соединение потеряно");
-      }
-
-      chunks.push(value);
-      const fullResponse = new Uint8Array(chunks.flatMap(chunks=>[...chunks]));
-
-      if (fullResponse.length >= 5) {
-        const expectedLength = 5 + fullResponse[4];
-
-        if (fullResponse.length === expectedLength) {
-          return fullResponse;
+    const startTime = Date.now();
+    const TIMEOUT_MS = 3000;
+    
+    try {
+      while (true) {
+        // Проверка таймаута
+        if (Date.now() - startTime > TIMEOUT_MS) {
+          if (chunks.length > 0) {
+            const partialResponse = this.concatChunks(chunks);
+            return partialResponse;
+          }
+          throw new Error("Таймаут приёма данных");
+        }
+        
+        const { value, done } = await this.reader.read();
+        
+        if (done) {
+          if (chunks.length > 0) {
+            const partialResponse = this.concatChunks(chunks);
+            console.warn(`[receive] Соединение закрыто, возвращаем частичные данные (${partialResponse.length} байт)`);
+            return partialResponse;
+          }
+          await this.disconnect();
+          throw new Error("Соединение потеряно");
+        }
+        
+        if (!value || value.length === 0) {
+          continue;
+        }
+        
+        chunks.push(value);
+        const fullResponse = this.concatChunks(chunks);
+        
+        if (fullResponse.length >= 5) {
+          const expectedLength = 5 + fullResponse[4];
+          
+          if (fullResponse.length >= expectedLength) {
+            if (fullResponse.length > expectedLength) {
+              console.warn(`[receive] Обрезаем лишние ${fullResponse.length - expectedLength} байт`);
+              const result = fullResponse.slice(0, expectedLength);
+              return result;
+            }
+            return fullResponse;
+          }
         }
       }
+    } catch (err) {
+      throw new Error(`Ошибка при получении пакета: ${err}`);
     }
   }
-  
+
+  private concatChunks(chunks: Uint8Array[]): Uint8Array {
+    const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+    const result = new Uint8Array(totalLength);
+    let offset = 0;
+    for (const chunk of chunks) {
+      result.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return result;
+  }
 }

@@ -18,6 +18,8 @@ export interface LogEntry {
   number: number;
   date: string;
   event: string;
+  old: string;
+  new: string;
 }
 
 export interface Log {
@@ -36,6 +38,8 @@ export interface DeviceState {
   idVlan: string;
 
   log: Log;
+  isLoadingLog: boolean;
+  loadingProgressLog: number;
 
   successFlags: {
     time: boolean;
@@ -53,6 +57,8 @@ export interface DeviceState {
   setIdVlan: (idVlan: string) => void;
 
   setLog: (log: Log) => void;
+  setIsLoadingLog: (isLoading: boolean) => void;
+  setLoadingProgressLog: (progress: number) => void;
 
   setSuccessFlag: (key: keyof DeviceState['successFlags'], value: boolean) => void;
 }
@@ -85,6 +91,8 @@ export const useDeviceStore = create<DeviceState>((set) => ({
   idSV: '',
   idVlan: '',
   log: initialLog,
+  isLoadingLog: false,
+  loadingProgressLog: 0,
   successFlags: {
     time: false,
     macAddress: false,
@@ -105,6 +113,8 @@ export const useDeviceStore = create<DeviceState>((set) => ({
   setIdVlan: (idVlan) => set({ idVlan }),
 
   setLog: (log) => set({ log }),
+  setIsLoadingLog: (isLoadingLog) => set({ isLoadingLog }),
+  setLoadingProgressLog: (progress) => set({ loadingProgressLog: progress }),
   
   setSuccessFlag: (key, value) => set((state) => ({
     successFlags: { ...state.successFlags, [key]: value }

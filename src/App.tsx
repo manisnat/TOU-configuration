@@ -22,6 +22,7 @@ function App() {
     recordIdSVFunc,
     recordIdVlanFunc,
     readLog,
+    cleanLogStore,
   } = useTouDevice();
 
 
@@ -78,11 +79,10 @@ function App() {
               onTime={setTimeFunc}
             />
 
-            <Box w="100%">
-              <LogConsole 
-                onReadLog={readLog}
-              />
-            </Box>
+            <LogConsole 
+              onReadLog={readLog}
+              onCleanLogStore={cleanLogStore}
+            />
           </Stack>
           
         </VStack>

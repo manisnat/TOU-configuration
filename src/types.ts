@@ -88,10 +88,38 @@ export interface NumLineLogData {
   rawResponse: RawResponse;
 }
 
-export interface LineLogData {
+export interface LineLogOnOffData {
   numberLog: number;
   numberLine: [number, number];
-  line: number[];
+  date: [number, number, number, number, number, number];
+  onOff: number;
+  rawResponse: RawResponse;
+}
+
+export interface LineLogCorrectionsData {
+  numberLog: number;
+  numberLine: [number, number];
+  date: [number, number, number, number, number, number];
+  typeCorrection: number;
+  oldMeaning: [number, number, number, number, number, number];
+  newMeaning: [number, number, number, number, number, number];
+  rawResponse: RawResponse;
+}
+
+export interface LineLogMalfunctionsData {
+  numberLog: number;
+  numberLine: [number, number];
+  date: [number, number, number, number, number, number];
+  typeOfFault: number,
+  rawResponse: RawResponse;
+}
+
+export interface LineLogConnectionsData {
+  numberLog: number;
+  numberLine: [number, number];
+  date: [number, number, number, number, number, number];
+  numberPhase: number;
+  onOff: number;
   rawResponse: RawResponse;
 }
 

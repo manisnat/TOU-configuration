@@ -4,6 +4,7 @@ import { SerialTransport } from '../transports/SerialTransport';
 import { TouRepository } from '../repositories/TouRepository';
 import { TouService } from '../services/TouService';
 import { TouProtocol } from '../protocols/TouProtocol';
+import { parseLogEntry, formatLogDate } from '../adapters/logAdapter';
 
 const toStringPadStart = (num: number, count: number, data: string = "0"): string => {
   return num.toString().padStart(count, data);
@@ -22,6 +23,8 @@ export function useTouDevice() {
     setIdSV,
     setIdVlan,
     setLog,
+    setIsLoadingLog,
+    setLoadingProgressLog,
     setSuccessFlag,
   } = useDeviceStore();
 
@@ -190,29 +193,47 @@ export function useTouDevice() {
 
   const readLog = useCallback(async (numLog: number): Promise<void> => {
     try {
+      setIsLoadingLog(true);
+      setLoadingProgressLog(0);
       const logData = await service.getStatusLog(numLog);
       const capacityLog = TouProtocol.bytesToInt(logData.capacityLog);
 
-      console.log(`Время последней записи: ${toStringPadStart(logData.dayTimeLast, 2)}.${toStringPadStart(logData.monthTimeLast, 2)}.${toStringPadStart(logData.yearTimeLast, 4, "2000")} ${toStringPadStart(logData.hourTimeLast, 2)}:${toStringPadStart(logData.minuteTimeLast, 2)}:${toStringPadStart(logData.secTimeLast, 2)}`);
-      console.log(`Ёмкость журнала: ${capacityLog}`);
-
-      const entries: Array<{ number: number; date: string; event: string }> = [];
+      type entriesType = Array<{ number: number; date: string; event: string; old: string; new: string}>;
+      const entries: entriesType = [];
 
       for (let i = 1; i <= capacityLog; i++) {
-        const lineLogData = await service.getLineLog(numLog, i);
-        entries.push({
-          number: TouProtocol.bytesToInt(lineLogData.numberLine),
-          date: `${toStringPadStart(lineLogData.line[2], 2)}.${toStringPadStart(lineLogData.line[1], 2)}.${toStringPadStart(lineLogData.line[0], 4, "2000")} ${toStringPadStart(lineLogData.line[3], 2)}:${toStringPadStart(lineLogData.line[4], 2)}:${toStringPadStart(lineLogData.line[5], 2)}`,
-          event: lineLogData.line[6] ? 'Включение' : 'Отключение',
-        });
+        const progress = Math.round((i / capacityLog) * 100);
+        setLoadingProgressLog(progress);
+
+        let lineLogData;
+        switch (numLog) {
+          case 1: lineLogData = await service.getLineLogOnOff(numLog, i); break;
+          case 2: lineLogData = await service.getLineLogCorrections(numLog, i); break;
+          case 3: lineLogData = await service.getLineLogMalfunctions(numLog, i); break;
+          case 4: lineLogData = await service.getLineLogConnections(numLog, i); break;
+          default: throw new Error(`Неизвестный тип журнала: ${numLog}`);
+        }
+        entries.push(parseLogEntry(numLog, lineLogData));
       }
 
       setLog({ 
-        timeLast: `${toStringPadStart(logData.dayTimeLast, 2)}.${toStringPadStart(logData.monthTimeLast, 2)}.${toStringPadStart(logData.yearTimeLast, 4, "2000")} ${toStringPadStart(logData.hourTimeLast, 2)}:${toStringPadStart(logData.minuteTimeLast, 2)}:${toStringPadStart(logData.secTimeLast, 2)}`,
+        timeLast: formatLogDate([logData.dayTimeLast, logData.monthTimeLast, logData.yearTimeLast, logData.hourTimeLast, logData.minuteTimeLast, logData.secTimeLast]),
         capacity: capacityLog,
         entries: entries,
       });
 
+      setLoadingProgressLog(100);
+      setIsLoadingLog(false);
+
+      const line = await service.getLineLogCorrections(numLog, 2);
+      console.log(line.rawResponse);
+      // const arrOld = String.fromCharCode(...arrOldBytes);
+      const arrOld = TouProtocol.bytesToInt(line.oldMeaning);
+      console.log(arrOld);
+
+      // const arrNew = String.fromCharCode(...arrNewBytes);
+      const arrNew = TouProtocol.bytesToInt(line.newMeaning);
+      console.log(arrNew);
 
     // const numLineLogData = await service.getNumLineLog(numLog, 2000, 1, 1, 1, 0, 0);
     // console.log(`${toStringPadStart(numLineLogData.dayTimeLast, 2)}.${toStringPadStart(numLineLogData.monthTimeLast, 2)}.${toStringPadStart(numLineLogData.yearTimeLast, 4, "2000")} ${toStringPadStart(numLineLogData.hourTimeLast, 2)}:${toStringPadStart(numLineLogData.minuteTimeLast, 2)}:${toStringPadStart(numLineLogData.secTimeLast, 2)}`);
@@ -228,7 +249,16 @@ export function useTouDevice() {
     } catch (error) {
       setError((error as Error).message);
     }
-  }, [service, setLog, setError]);
+  }, [service, setLog, setIsLoadingLog, setLoadingProgressLog, setError]);
+
+  const cleanLogStore = useCallback((): void => {
+    setIsLoadingLog(false);
+    setLog({ 
+      timeLast: '',
+      capacity: 0,
+      entries: [],
+    });
+  }, [setIsLoadingLog, setLog]);
 
   return {
     connectFunc,
@@ -240,5 +270,6 @@ export function useTouDevice() {
     recordIdSVFunc,
     recordIdVlanFunc,
     readLog,
+    cleanLogStore,
   };
 }

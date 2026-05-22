@@ -11,7 +11,10 @@ import type {
   IdVlanData,
   StatusLogData,
   NumLineLogData,
-  LineLogData,
+  LineLogOnOffData,
+  LineLogCorrectionsData,
+  LineLogMalfunctionsData,
+  LineLogConnectionsData,
   ErrorMessages
 } from "../types";
 
@@ -33,7 +36,10 @@ interface TouProtocolType {
   parseIdVlan(response: RawResponse): IdVlanData;
   parseStatusLog(response: RawResponse): StatusLogData;
   parseNumLineLog(response: RawResponse): NumLineLogData;
-  parseLineLog(response: RawResponse): LineLogData;
+  parseLineLogOnOff(response: RawResponse): LineLogOnOffData;
+  parseLineLogCorrections(response: RawResponse): LineLogCorrectionsData;
+  parseLineLogMalfunctions(response: RawResponse): LineLogMalfunctionsData;
+  parseLineLogConnections(response: RawResponse): LineLogConnectionsData;
 }
 
 export const TouProtocol: TouProtocolType = {
@@ -261,18 +267,65 @@ export const TouProtocol: TouProtocolType = {
     };
   },
 
-  parseLineLog(response: RawResponse): LineLogData {
+  parseLineLogOnOff(response: RawResponse): LineLogOnOffData {
     const arr = Array.from(response);
     const numLine: [number, number] = [arr[6], arr[7]];
-    let line: number[] = [];
-    for (let i = 8; i < arr[4] + 3; i++) {
-      line.push(arr[i]);
-    }
+    const date: [number, number, number, number, number, number] = [arr[8], arr[9], arr[10], arr[11], arr[12], arr[13]];
     
     return {
       numberLog: arr[5],
       numberLine: numLine,
-      line: line,
+      date: date,
+      onOff: arr[14],
+      rawResponse: arr,
+    };
+  },
+
+  parseLineLogCorrections(response: RawResponse): LineLogCorrectionsData {
+    const arr = Array.from(response);
+    const numLine: [number, number] = [arr[6], arr[7]];
+    type sixNumberArray = [number, number, number, number, number, number];
+    const date: sixNumberArray = [arr[8], arr[9], arr[10], arr[11], arr[12], arr[13]];
+    const oldMeaning: sixNumberArray = [arr[15], arr[16], arr[17], arr[18], arr[19], arr[20]];
+    const newMeaning: sixNumberArray = [arr[21], arr[22], arr[23], arr[24], arr[25], arr[26]];
+    
+    
+    return {
+      numberLog: arr[5],
+      numberLine: numLine,
+      date: date,
+      typeCorrection: arr[14],
+      oldMeaning: oldMeaning,
+      newMeaning: newMeaning,
+      rawResponse: arr,
+    };
+  },
+
+  parseLineLogMalfunctions(response: RawResponse): LineLogMalfunctionsData {
+    const arr = Array.from(response);
+    const numLine: [number, number] = [arr[6], arr[7]];
+    const date: [number, number, number, number, number, number] = [arr[8], arr[9], arr[10], arr[11], arr[12], arr[13]];
+    
+    return {
+      numberLog: arr[5],
+      numberLine: numLine,
+      date: date,
+      typeOfFault: arr[14],
+      rawResponse: arr,
+    };
+  },
+
+  parseLineLogConnections(response: RawResponse): LineLogConnectionsData {
+    const arr = Array.from(response);
+    const numLine: [number, number] = [arr[6], arr[7]];
+    const date: [number, number, number, number, number, number] = [arr[8], arr[9], arr[10], arr[11], arr[12], arr[13]];
+    
+    return {
+      numberLog: arr[5],
+      numberLine: numLine,
+      date: date,
+      numberPhase: arr[14],
+      onOff: arr[15],
       rawResponse: arr,
     };
   },

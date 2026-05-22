@@ -38,10 +38,9 @@ export class TouRepository {
     );
     // Вывод пакета, пока что
     console.log(`Отправка команды 0x${command.toString(16)}: ${this.protocol.formatPacket(packet)}`);
-
+    
     const packetArray = new Uint8Array(packet);
     const rawResponse = await this.transport.sendReceive(packetArray);
-
     const isSuccess = this.protocol.checkResponseError(rawResponse, command);
     if (!isSuccess) {
       throw new Error(`Ошибка при выполнении команды ${command}`);
